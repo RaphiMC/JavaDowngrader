@@ -1,0 +1,32 @@
+apply plugin: "java"
+
+configurations {
+    include
+
+    implementation.extendsFrom include
+    api.extendsFrom include
+}
+
+dependencies {
+    include project(":")
+
+    include "net.sf.jopt-simple:jopt-simple:5.0.4"
+}
+
+jar {
+    dependsOn configurations.include
+    from {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        configurations.include.collect {
+            zipTree(it)
+        }
+    } {
+        exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
+    }
+
+    manifest {
+        attributes(
+                "Main-Class": "net.raphimc.javadowngrader.standalone.Main"
+        )
+    }
+}
