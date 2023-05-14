@@ -19,15 +19,12 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven {
-            name = "Lenni0451 Snapshots"
-            url "https://maven.lenni0451.net/snapshots"
-        }
     }
 }
 
 dependencies {
-    api "net.lenni0451.classtransform:core:1.9.0-SNAPSHOT"
+    api "org.ow2.asm:asm-commons:9.5"
+    api "org.slf4j:slf4j-api:1.7.36"
 }
 
 java {
@@ -45,7 +42,7 @@ publishing {
     repositories {
         maven {
             name = "reposilite"
-            url = "https://maven.lenni0451.net/snapshots"
+            url = "https://maven.lenni0451.net/releases"
             credentials(PasswordCredentials)
             authentication {
                 basic(BasicAuthentication)
