@@ -18,21 +18,31 @@
 package net.raphimc.javadowngrader.standalone.transform;
 
 import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
+import net.lenni0451.classtransform.utils.tree.IClassProvider;
 
 import java.util.Map;
 
 public class JarClassProvider extends BasicClassProvider {
 
+    private final IClassProvider parent;
     private final Map<String, byte[]> classes;
 
     public JarClassProvider(final Map<String, byte[]> classes) {
         this.classes = classes;
+        this.parent = null;
+    }
+
+    public JarClassProvider(final Map<String, byte[]> classes, final IClassProvider parent) {
+        this.classes = classes;
+        this.parent = parent;
     }
 
     @Override
     public byte[] getClass(String name) {
         if (this.classes.containsKey(name)) {
             return this.classes.get(name);
+        } else if (this.parent != null) {
+            return this.parent.getClass(name);
         }
 
         return super.getClass(name);
