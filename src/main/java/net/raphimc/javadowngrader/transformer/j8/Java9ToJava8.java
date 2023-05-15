@@ -39,7 +39,17 @@ public class Java9ToJava8 extends DowngradingTransformer {
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNullElse", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new ObjectsRequireNonNullElseMCR());
 
-        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/nio/ByteBuffer", "flip", "()Ljava/nio/ByteBuffer;", new BufferMCR("java/nio/ByteBuffer"));
+        final String[] bufferClasses = new String[]{"java/nio/ByteBuffer", "java/nio/ShortBuffer", "java/nio/CharBuffer", "java/nio/IntBuffer", "java/nio/FloatBuffer", "java/nio/DoubleBuffer", "java/nio/LongBuffer"};
+        for (String bufferClass : bufferClasses) {
+            this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, bufferClass, "flip", "()L" + bufferClass + ';', new BufferMCR(bufferClass));
+            this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, bufferClass, "clear", "()L" + bufferClass + ';', new BufferMCR(bufferClass));
+            this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, bufferClass, "mark", "()L" + bufferClass + ';', new BufferMCR(bufferClass));
+            this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, bufferClass, "reset", "()L" + bufferClass + ';', new BufferMCR(bufferClass));
+            this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, bufferClass, "rewind", "()L" + bufferClass + ';', new BufferMCR(bufferClass));
+            this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, bufferClass, "limit", "()L" + bufferClass + ';', new BufferMCR(bufferClass));
+            this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, bufferClass, "limit", "(I)L" + bufferClass + ';', new BufferMCR(bufferClass));
+            this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, bufferClass, "position", "(I)L" + bufferClass + ';', new BufferMCR(bufferClass));
+        }
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "or", "(Ljava/util/function/Supplier;)Ljava/util/Optional;", new OptionalOrMCR());
 
