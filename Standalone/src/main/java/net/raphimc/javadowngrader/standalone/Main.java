@@ -39,6 +39,9 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
@@ -101,7 +104,7 @@ public class Main {
         }
     }
 
-    private static void doConversion(final File inputFile, final File outputFile, final JavaVersion targetVersion) throws IOException, URISyntaxException {
+    private static void doConversion(final File inputFile, final File outputFile, final JavaVersion targetVersion) throws IOException, URISyntaxException, InterruptedException {
         JavaDowngrader.LOGGER.info("Downgrading classes to Java {}", targetVersion.getName());
         if (outputFile.delete()) {
             JavaDowngrader.LOGGER.info("Deleted old {}", outputFile);
@@ -117,8 +120,9 @@ public class Main {
 
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
                 final Path outRoot = outFs.getRootDirectories().iterator().next();
+                final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
                 try (Stream<Path> stream = Files.walk(inRoot)) {
-                    stream.parallel().forEach(path -> {
+                    stream.forEach(path -> threadPool.execute(() -> {
                         try {
                             final String relative = inRoot.relativize(path).toString();
                             final Path inOther = outRoot.resolve(relative);
@@ -141,7 +145,11 @@ public class Main {
                         } catch (IOException e) {
                             throw new UncheckedIOException(e);
                         }
-                    });
+                    }));
+                }
+                threadPool.shutdown();
+                while (true) {
+                    if (threadPool.awaitTermination(1000, TimeUnit.MILLISECONDS)) break;
                 }
             }
         }
