@@ -20,6 +20,7 @@ package net.raphimc.javadowngrader.transformer.j9;
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
 import net.raphimc.javadowngrader.transformer.j9.methodcallreplacer.ListCopyOfMCR;
 import net.raphimc.javadowngrader.transformer.j9.methodcallreplacer.MapCopyOfMCR;
+import net.raphimc.javadowngrader.transformer.j9.methodcallreplacer.ReaderTransferToMCR;
 import net.raphimc.javadowngrader.transformer.j9.methodcallreplacer.SetCopyOfMCR;
 import org.objectweb.asm.Opcodes;
 
@@ -31,6 +32,7 @@ public class Java10ToJava9 extends DowngradingTransformer {
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/List", "copyOf", "(Ljava/util/Collection;)Ljava/util/List;", new ListCopyOfMCR());
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Set", "copyOf", "(Ljava/util/Collection;)Ljava/util/Set;", new SetCopyOfMCR());
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Map", "copyOf", "(Ljava/util/Map;)Ljava/util/Map;", new MapCopyOfMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/io/Reader", "transferTo", new ReaderTransferToMCR());
     }
 
 }
