@@ -41,6 +41,8 @@ public class Java9ToJava8 extends DowngradingTransformer {
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/nio/ByteBuffer", "flip", "()Ljava/nio/ByteBuffer;", new ByteBufferFlipMCR());
 
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "or", "(Ljava/util/function/Supplier;)Ljava/util/Optional;", new OptionalOrMCR());
+
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/regex/Matcher", "appendReplacement", "(Ljava/lang/StringBuilder;Ljava/lang/String;)Ljava/util/regex/Matcher;", new MatcherAppendReplacementMCR());
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/regex/Matcher", "appendTail", "(Ljava/lang/StringBuilder;)Ljava/lang/StringBuilder;", new MatcherAppendTailMCR());
     }
