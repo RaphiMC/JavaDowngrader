@@ -20,6 +20,7 @@ package net.raphimc.javadowngrader.transformer.j10;
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
 import net.raphimc.javadowngrader.transformer.j10.methodcallreplacer.FilesReadStringMCR;
 import net.raphimc.javadowngrader.transformer.j10.methodcallreplacer.OptionalIsEmptyMCR;
+import net.raphimc.javadowngrader.transformer.j10.methodcallreplacer.PathOfMCR;
 import net.raphimc.javadowngrader.transformer.j10.methodcallreplacer.StringIsBlankMCR;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
@@ -34,6 +35,8 @@ public class Java11ToJava10 extends DowngradingTransformer {
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/lang/String", "isBlank", "()Z", new StringIsBlankMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/nio/file/Files", "readString", new FilesReadStringMCR());
+
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/nio/file/Path", "of", new PathOfMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "isEmpty", "()Z", new OptionalIsEmptyMCR());
     }
