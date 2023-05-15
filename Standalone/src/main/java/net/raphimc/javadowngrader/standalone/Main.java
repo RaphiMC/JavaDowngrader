@@ -117,7 +117,7 @@ public class Main {
 
         JavaDowngrader.LOGGER.info("Downgrading classes to Java " + targetVersion.getName());
         final TransformerManager transformerManager = new TransformerManager(new JarClassProvider(classes));
-        transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(transformerManager, targetVersion.getVersion()));
+        transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(transformerManager, targetVersion.getVersion(), classes.keySet()));
 
         for (Map.Entry<String, byte[]> entry : classes.entrySet()) {
             final String zipName = entry.getKey().replace('.', '/') + ".class";

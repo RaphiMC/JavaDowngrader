@@ -23,21 +23,32 @@ import net.lenni0451.classtransform.utils.ASMUtils;
 import net.raphimc.javadowngrader.JavaDowngrader;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Set;
+
 public class JavaDowngraderTransformer implements IBytecodeTransformer {
 
     private final TransformerManager transformerManager;
     private final int targetVersion;
+    private final Collection<String> classNames;
 
-    public JavaDowngraderTransformer(final TransformerManager transformerManager, final int targetVersion) {
+    public JavaDowngraderTransformer(final TransformerManager transformerManager, final int targetVersion, Set<String> classNames) {
         this.transformerManager = transformerManager;
         this.targetVersion = targetVersion;
+        this.classNames = classNames;
     }
 
     @Override
     public byte[] transform(String className, byte[] bytecode, boolean calculateStackMapFrames) {
-        final ClassNode classNode = ASMUtils.fromBytes(bytecode);
-        if (classNode.version <= this.targetVersion) return null;
+        if (ByteBuffer.wrap(bytecode, 4, 4).getInt() <= this.targetVersion) {
+            return null;
+        }
+        if (!classNames.contains(className)) {
+            return null;
+        }
 
+        final ClassNode classNode = ASMUtils.fromBytes(bytecode);
         JavaDowngrader.downgrade(classNode, this.targetVersion);
 
         if (calculateStackMapFrames) {
