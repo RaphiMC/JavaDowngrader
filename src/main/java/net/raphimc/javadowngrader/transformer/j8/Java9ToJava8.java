@@ -21,6 +21,7 @@ import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
 import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class Java9ToJava8 extends DowngradingTransformer {
 
@@ -43,6 +44,18 @@ public class Java9ToJava8 extends DowngradingTransformer {
     @Override
     protected void preTransform(ClassNode classNode) {
         StringConcatFactoryReplacer.replace(classNode);
+        this.makeInterfaceMethodsPublic(classNode);
+    }
+
+    private void makeInterfaceMethodsPublic(final ClassNode classNode) {
+        if ((classNode.access & Opcodes.ACC_INTERFACE) != 0) {
+            for (MethodNode method : classNode.methods) {
+                if ((method.access & Opcodes.ACC_PRIVATE) != 0) {
+                    method.access &= ~Opcodes.ACC_PRIVATE;
+                }
+                method.access |= Opcodes.ACC_PUBLIC;
+            }
+        }
     }
 
 }
