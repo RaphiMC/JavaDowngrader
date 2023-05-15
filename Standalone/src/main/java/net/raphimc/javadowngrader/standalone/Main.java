@@ -61,7 +61,7 @@ public class Main {
             .withRequiredArg()
             .withValuesConvertedBy(new JavaVersionEnumConverter())
             .required();
-        final OptionSpec<List<File>> libraryPath = parser.acceptsAll(asList("library_path", "library", "l"), "Additional libraries to add the classpath (required for stack mapping)")
+        final OptionSpec<List<File>> libraryPath = parser.acceptsAll(asList("library_path", "library", "l"), "Additional libraries to add to the classpath (required for stack mapping)")
             .withRequiredArg()
             .withValuesConvertedBy(new PathConverter());
 
