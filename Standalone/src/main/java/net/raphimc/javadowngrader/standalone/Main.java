@@ -19,12 +19,15 @@ package net.raphimc.javadowngrader.standalone;
 
 import joptsimple.*;
 import net.lenni0451.classtransform.TransformerManager;
-import net.lenni0451.classtransform.utils.ASMUtils;
+import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
 import net.raphimc.javadowngrader.JavaDowngrader;
 import net.raphimc.javadowngrader.standalone.transform.JavaDowngraderTransformer;
+import net.raphimc.javadowngrader.standalone.transform.LazyFileClassProvider;
 import net.raphimc.javadowngrader.standalone.transform.PathClassProvider;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -46,9 +49,21 @@ public class Main {
         final OptionParser parser = new OptionParser();
         final OptionSpec<Void> help = parser.acceptsAll(asList("help", "h", "?"), "Get a list of all arguments").forHelp();
 
-        final OptionSpec<String> inputLocation = parser.acceptsAll(asList("input_file", "input", "i"), "The location of the input jar file").withRequiredArg().ofType(String.class).required();
-        final OptionSpec<String> outputLocation = parser.acceptsAll(asList("output_file", "output", "o"), "The location of the output jar file").withRequiredArg().ofType(String.class).required();
-        final OptionSpec<JavaVersion> version = parser.acceptsAll(asList("target_version", "version", "v"), "The target/output java version").withRequiredArg().withValuesConvertedBy(new JavaVersionEnumConverter()).required();
+        final OptionSpec<File> inputLocation = parser.acceptsAll(asList("input_file", "input", "i"), "The location of the input jar file")
+            .withRequiredArg()
+            .ofType(File.class)
+            .required();
+        final OptionSpec<File> outputLocation = parser.acceptsAll(asList("output_file", "output", "o"), "The location of the output jar file")
+            .withRequiredArg()
+            .ofType(File.class)
+            .required();
+        final OptionSpec<JavaVersion> version = parser.acceptsAll(asList("target_version", "version", "v"), "The target/output java version")
+            .withRequiredArg()
+            .withValuesConvertedBy(new JavaVersionEnumConverter())
+            .required();
+        final OptionSpec<List<File>> libraryPath = parser.acceptsAll(asList("library_path", "library", "l"), "Additional libraries to add the classpath (required for stack mapping)")
+            .withRequiredArg()
+            .withValuesConvertedBy(new PathConverter());
 
         final OptionSet options;
         try {
@@ -64,7 +79,7 @@ public class Main {
             System.exit(1);
         }
 
-        final File inputFile = new File(options.valueOf(inputLocation));
+        final File inputFile = options.valueOf(inputLocation);
         if (!inputFile.isFile()) {
             JavaDowngrader.LOGGER.error("Input file does not exist or is not a file");
             System.exit(1);
@@ -74,7 +89,7 @@ public class Main {
             System.exit(1);
         }
 
-        final File outputFile = new File(options.valueOf(outputLocation));
+        final File outputFile = options.valueOf(outputLocation);
         final File parentFile = outputFile.getParentFile();
         if (parentFile != null) {
             outputFile.getParentFile().mkdirs();
@@ -86,7 +101,7 @@ public class Main {
 
         try {
             final long start = System.nanoTime();
-            doConversion(inputFile, outputFile, options.valueOf(version));
+            doConversion(inputFile, outputFile, options.valueOf(version), GeneralUtil.flatten(options.valuesOf(libraryPath)));
             final long end = System.nanoTime();
             JavaDowngrader.LOGGER.info(
                     "Done in {}.",
@@ -102,7 +117,12 @@ public class Main {
         }
     }
 
-    private static void doConversion(final File inputFile, final File outputFile, final JavaVersion targetVersion) throws Throwable {
+    private static void doConversion(
+        final File inputFile,
+        final File outputFile,
+        final JavaVersion targetVersion,
+        List<File> libraryPath
+    ) throws Throwable {
         JavaDowngrader.LOGGER.info("Downgrading classes to Java {}", targetVersion.getName());
         if (outputFile.isFile() && !outputFile.canWrite()) {
             JavaDowngrader.LOGGER.error("Cannot write to {}", outputFile);
@@ -112,12 +132,33 @@ public class Main {
             JavaDowngrader.LOGGER.info("Deleted old {}", outputFile);
         }
 
+        try (Stream<File> stream = libraryPath.stream()
+            .flatMap(f -> {
+                if (f.isFile()) {
+                    return Stream.of(f);
+                }
+                try {
+                    //noinspection resource
+                    return Files.walk(f.toPath())
+                        .filter(Files::isRegularFile)
+                        .filter(p -> p.getFileName().endsWith(".jar"))
+                        .map(Path::toFile);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            })
+        ) {
+            libraryPath = stream.collect(Collectors.toList());
+        }
+
         try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
             final Path inRoot = inFs.getRootDirectories().iterator().next();
-            final TransformerManager transformerManager = new TransformerManager(new PathClassProvider(inRoot));
+            final TransformerManager transformerManager = new TransformerManager(
+                new PathClassProvider(inRoot, new LazyFileClassProvider(libraryPath, new BasicClassProvider()))
+            );
             transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(
                     transformerManager, targetVersion.getVersion(),
-                    c -> Files.isRegularFile(inRoot.resolve(ASMUtils.slash(c).concat(".class")))
+                    c -> Files.isRegularFile(inRoot.resolve(GeneralUtil.toClassFilename(c)))
             ));
 
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
@@ -126,7 +167,7 @@ public class Main {
                 final List<Callable<Void>> tasks;
                 try (Stream<Path> stream = Files.walk(inRoot)) {
                     tasks = stream.map(path -> (Callable<Void>) () -> {
-                        final String relative = inRoot.relativize(path).toString();
+                        final String relative = GeneralUtil.slashName(inRoot.relativize(path));
                         final Path inOther = outRoot.resolve(relative);
                         if (Files.isDirectory(path)) {
                             Files.createDirectories(inOther);
@@ -140,7 +181,7 @@ public class Main {
                             Files.copy(path, inOther);
                             return null;
                         }
-                        final String className = ASMUtils.dot(relative.substring(0, relative.length() - 6));
+                        final String className = GeneralUtil.toClassName(relative);
                         final byte[] bytecode = Files.readAllBytes(path);
                         final byte[] result = transformerManager.transform(className, bytecode);
                         Files.write(inOther, result != null ? result : bytecode);
