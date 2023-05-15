@@ -36,7 +36,7 @@ jobs:
       - name: Downgrade Geyser
         run: java -jar JavaDowngrader-Standalone-*.jar -i Geyser-Standalone.jar -o Geyser-Standalone-out.jar -v 8
       - name: Try Geyser
-        run: echo stop | java -jar Geyser-Standalone-out.jar
+        run: echo geyser stop | java -jar Geyser-Standalone-out.jar
   test-paperclip:
     runs-on: ubuntu-latest
     needs: build
