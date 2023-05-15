@@ -54,5 +54,10 @@ jobs:
         run: java -jar JavaDowngrader-Standalone-*.jar -i paper-1.19.4-536.jar -o paperclip-downgraded.jar -v 8
       - name: Run Paperclip
         run: java -Dpaperclip.patchonly=true -cp paperclip-downgraded.jar io.papermc.paperclip.Paperclip
+      - name: Downgrade libraries
+        run: |
+          find libraries -type f -name "*.jar" -exec java -jar JavaDowngrader-Standalone-*.jar -i '{} -o '{}.downgraded' -v 8 \;
+          find libraries -type f -name "*.jar" -exec del {} \;
+          find libraries -type f -name "*.jar.downgraded" -exec sh -c 'mv "$0" "${0%.jar.downgraded}.jar' \;
       - name: Downgrade Paper
-        run: java -jar JavaDowngrader-Standalone-*.jar -i versions/1.19.4/paper-1.19.4.jar -o paper-downgraded.jar -v 8
+        run: java -jar JavaDowngrader-Standalone-*.jar -i versions/1.19.4/paper-1.19.4.jar -o paper-downgraded.jar -v 8 -l libraries

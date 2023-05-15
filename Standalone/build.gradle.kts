@@ -20,9 +20,13 @@ dependencies {
     include(project(":"))
 
     include("net.lenni0451.classtransform:core:1.9.0-SNAPSHOT")
+
     include("net.sf.jopt-simple:jopt-simple:5.0.4")
+
     include("org.apache.logging.log4j:log4j-core:2.20.0")
     include("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
+
+    implementation("org.jetbrains:annotations:24.0.1")
 }
 
 tasks.jar {

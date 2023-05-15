@@ -17,25 +17,30 @@
  */
 package net.raphimc.javadowngrader.standalone.transform;
 
-import net.lenni0451.classtransform.utils.ASMUtils;
-import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
+import net.lenni0451.classtransform.utils.tree.IClassProvider;
+import net.raphimc.javadowngrader.standalone.GeneralUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class PathClassProvider extends BasicClassProvider {
+public class PathClassProvider extends AbstractClassProvider {
 
     private final Path root;
 
-    public PathClassProvider(Path root) {
+    public PathClassProvider(Path root, IClassProvider parent) {
+        super(parent);
         this.root = root;
     }
 
     @Override
     public byte[] getClass(String name) {
-        final Path path = root.resolve(ASMUtils.slash(name).concat(".class"));
+        final Path path = root.resolve(GeneralUtil.toClassFilename(name));
         if (Files.exists(path)) {
             try {
                 return Files.readAllBytes(path);
@@ -47,4 +52,28 @@ public class PathClassProvider extends BasicClassProvider {
         return super.getClass(name);
     }
 
+    @Override
+    public Map<String, Supplier<byte[]>> getAllClasses() {
+        try (Stream<Path> stream = Files.walk(root)) {
+            return GeneralUtil.merge(
+                (a, b) -> b,
+                super.getAllClasses(),
+                stream
+                    .filter(Files::isRegularFile)
+                    .filter(f -> f.getFileName().endsWith(".class"))
+                    .collect(Collectors.toMap(
+                        p -> GeneralUtil.toClassName(GeneralUtil.slashName(root.relativize(p))),
+                        p -> () -> {
+                            try {
+                                return Files.readAllBytes(p);
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        }
+                    ))
+            );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 }
