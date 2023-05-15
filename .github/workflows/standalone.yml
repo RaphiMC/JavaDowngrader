@@ -35,7 +35,9 @@ jobs:
         run: curl -Lo Geyser-Standalone.jar https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/standalone
       - name: Downgrade Geyser
         run: java -jar JavaDowngrader-Standalone-*.jar -i Geyser-Standalone.jar -o Geyser-Standalone-out.jar -v 8
-  test-paper:
+      - name: Try Geyser
+        run: echo stop | java -jar Geyser-Standalone-out.jar
+  test-paperclip:
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -54,10 +56,3 @@ jobs:
         run: java -jar JavaDowngrader-Standalone-*.jar -i paper-1.19.4-536.jar -o paperclip-downgraded.jar -v 8
       - name: Run Paperclip
         run: java -Dpaperclip.patchonly=true -cp paperclip-downgraded.jar io.papermc.paperclip.Paperclip
-      - name: Downgrade libraries
-        run: |
-          find libraries -type f -name "*.jar" -exec java -jar JavaDowngrader-Standalone-*.jar -i '{} -o '{}.downgraded' -v 8 \;
-          find libraries -type f -name "*.jar" -exec del {} \;
-          find libraries -type f -name "*.jar.downgraded" -exec sh -c 'mv "$0" "${0%.jar.downgraded}.jar' \;
-      - name: Downgrade Paper
-        run: java -jar JavaDowngrader-Standalone-*.jar -i versions/1.19.4/paper-1.19.4.jar -o paper-downgraded.jar -v 8 -l libraries
