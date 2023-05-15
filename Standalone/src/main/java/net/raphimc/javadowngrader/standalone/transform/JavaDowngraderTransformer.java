@@ -24,19 +24,18 @@ import net.raphimc.javadowngrader.JavaDowngrader;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Set;
+import java.util.function.Predicate;
 
 public class JavaDowngraderTransformer implements IBytecodeTransformer {
 
     private final TransformerManager transformerManager;
     private final int targetVersion;
-    private final Collection<String> classNames;
+    private final Predicate<String> classFilter;
 
-    public JavaDowngraderTransformer(final TransformerManager transformerManager, final int targetVersion, Set<String> classNames) {
+    public JavaDowngraderTransformer(final TransformerManager transformerManager, final int targetVersion, Predicate<String> classFilter) {
         this.transformerManager = transformerManager;
         this.targetVersion = targetVersion;
-        this.classNames = classNames;
+        this.classFilter = classFilter;
     }
 
     @Override
@@ -44,7 +43,7 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
         if (ByteBuffer.wrap(bytecode, 4, 4).getInt() <= this.targetVersion) {
             return null;
         }
-        if (!classNames.contains(className)) {
+        if (!classFilter.test(className)) {
             return null;
         }
 

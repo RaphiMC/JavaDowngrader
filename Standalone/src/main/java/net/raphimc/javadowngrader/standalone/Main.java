@@ -39,8 +39,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Locale;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
@@ -111,19 +109,11 @@ public class Main {
 
         try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
             final Path inRoot = inFs.getRootDirectories().iterator().next();
-            final Set<String> classes;
-            try (Stream<Path> stream = Files.walk(inRoot)) {
-                classes = stream
-                    .filter(Files::isRegularFile)
-                    .filter(p -> p.toString().endsWith(".class"))
-                    .map(inRoot::relativize)
-                    .map(Path::toString)
-                    .map(s -> ASMUtils.dot(s.substring(0, s.length() - 6)))
-                    .collect(Collectors.toSet());
-            }
-
             final TransformerManager transformerManager = new TransformerManager(new PathClassProvider(inRoot));
-            transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(transformerManager, targetVersion.getVersion(), classes));
+            transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(
+                transformerManager, targetVersion.getVersion(),
+                c -> Files.isRegularFile(inRoot.resolve(ASMUtils.slash(c).concat(".class")))
+            ));
 
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
                 final Path outRoot = outFs.getRootDirectories().iterator().next();
