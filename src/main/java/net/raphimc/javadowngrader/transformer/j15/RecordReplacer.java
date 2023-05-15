@@ -237,6 +237,8 @@ public class RecordReplacer {
 
             toString.visitEnd();
         }
+
+        classNode.recordComponents = null;
     }
 
 }
