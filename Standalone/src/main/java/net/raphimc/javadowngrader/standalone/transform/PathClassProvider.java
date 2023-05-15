@@ -17,32 +17,31 @@
  */
 package net.raphimc.javadowngrader.standalone.transform;
 
+import net.lenni0451.classtransform.utils.ASMUtils;
 import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
-import net.lenni0451.classtransform.utils.tree.IClassProvider;
 
-import java.util.Map;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-public class JarClassProvider extends BasicClassProvider {
+public class PathClassProvider extends BasicClassProvider {
 
-    private final IClassProvider parent;
-    private final Map<String, byte[]> classes;
+    private final Path root;
 
-    public JarClassProvider(final Map<String, byte[]> classes) {
-        this.classes = classes;
-        this.parent = null;
-    }
-
-    public JarClassProvider(final Map<String, byte[]> classes, final IClassProvider parent) {
-        this.classes = classes;
-        this.parent = parent;
+    public PathClassProvider(Path root) {
+        this.root = root;
     }
 
     @Override
     public byte[] getClass(String name) {
-        if (this.classes.containsKey(name)) {
-            return this.classes.get(name);
-        } else if (this.parent != null) {
-            return this.parent.getClass(name);
+        final Path path = root.resolve(ASMUtils.slash(name).concat(".class"));
+        if (Files.exists(path)) {
+            try {
+                return Files.readAllBytes(path);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
 
         return super.getClass(name);
