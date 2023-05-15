@@ -51,6 +51,7 @@ public class Java11ToJava10 extends DowngradingTransformer {
         for (final FieldNode fieldNode : classNode.fields) {
             fieldNode.access &= ~Opcodes.ACC_PRIVATE;
         }
+        classNode.nestHostClass = null;
     }
 
 }
