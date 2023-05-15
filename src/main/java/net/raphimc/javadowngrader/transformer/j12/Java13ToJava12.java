@@ -26,7 +26,9 @@ public class Java13ToJava12 extends DowngradingTransformer {
     public Java13ToJava12() {
         super(Opcodes.V13, Opcodes.V12);
 
-        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/nio/file/FileSystems", "newFileSystem", FileSystemsNewFileSystemCreator.NEWFILESYSTEM_DESC, new FileSystemsNewFileSystemMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/nio/file/FileSystems", "newFileSystem", "(Ljava/nio/file/Path;)Ljava/nio/file/FileSystem;", new FileSystemsNewFileSystemMCR(1));
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/nio/file/FileSystems", "newFileSystem", "(Ljava/nio/file/Path;Ljava/util/Map;)Ljava/nio/file/FileSystem;", new FileSystemsNewFileSystemMCR(2));
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/nio/file/FileSystems", "newFileSystem", "(Ljava/nio/file/Path;Ljava/util/Map;Ljava/lang/ClassLoader;)Ljava/nio/file/FileSystem;", new FileSystemsNewFileSystemMCR(3));
     }
 
 }
