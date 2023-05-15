@@ -32,7 +32,7 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
     private final int targetVersion;
     private final Predicate<String> classFilter;
 
-    public JavaDowngraderTransformer(final TransformerManager transformerManager, final int targetVersion, Predicate<String> classFilter) {
+    public JavaDowngraderTransformer(final TransformerManager transformerManager, final int targetVersion, final Predicate<String> classFilter) {
         this.transformerManager = transformerManager;
         this.targetVersion = targetVersion;
         this.classFilter = classFilter;
@@ -43,7 +43,7 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
         if (ByteBuffer.wrap(bytecode, 4, 4).getInt() <= this.targetVersion) {
             return null;
         }
-        if (!classFilter.test(className)) {
+        if (!this.classFilter.test(className)) {
             return null;
         }
 

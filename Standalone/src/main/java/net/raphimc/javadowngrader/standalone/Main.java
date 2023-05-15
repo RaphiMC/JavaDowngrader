@@ -17,10 +17,7 @@
  */
 package net.raphimc.javadowngrader.standalone;
 
-import joptsimple.OptionException;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
+import joptsimple.*;
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.utils.ASMUtils;
 import net.raphimc.javadowngrader.JavaDowngrader;
@@ -28,20 +25,17 @@ import net.raphimc.javadowngrader.standalone.transform.JavaDowngraderTransformer
 import net.raphimc.javadowngrader.standalone.transform.PathClassProvider;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
@@ -59,7 +53,7 @@ public class Main {
         final OptionSet options;
         try {
             options = parser.parse(args);
-        } catch (OptionException e) {
+        } catch (OptionException | ValueConversionException e) {
             JavaDowngrader.LOGGER.error("Error parsing options: " + e.getMessage());
             parser.printHelpOn(System.out);
             System.exit(1);
@@ -73,6 +67,10 @@ public class Main {
         final File inputFile = new File(options.valueOf(inputLocation));
         if (!inputFile.isFile()) {
             JavaDowngrader.LOGGER.error("Input file does not exist or is not a file");
+            System.exit(1);
+        }
+        if (!inputFile.canRead()) {
+            JavaDowngrader.LOGGER.error("Cannot read input file");
             System.exit(1);
         }
 
@@ -91,12 +89,12 @@ public class Main {
             doConversion(inputFile, outputFile, options.valueOf(version));
             final long end = System.nanoTime();
             JavaDowngrader.LOGGER.info(
-                "Done in {}.",
-                Duration.ofNanos(end - start)
-                    .toString()
-                    .substring(2)
-                    .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                    .toLowerCase(Locale.ROOT)
+                    "Done in {}.",
+                    Duration.ofNanos(end - start)
+                            .toString()
+                            .substring(2)
+                            .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                            .toLowerCase(Locale.ROOT)
             );
         } catch (Throwable e) {
             JavaDowngrader.LOGGER.error("Error while converting jar file. Please report this issue on the JavaDowngrader GitHub page", e);
@@ -104,52 +102,62 @@ public class Main {
         }
     }
 
-    private static void doConversion(final File inputFile, final File outputFile, final JavaVersion targetVersion) throws IOException, URISyntaxException, InterruptedException {
+    private static void doConversion(final File inputFile, final File outputFile, final JavaVersion targetVersion) throws Throwable {
         JavaDowngrader.LOGGER.info("Downgrading classes to Java {}", targetVersion.getName());
         if (outputFile.delete()) {
             JavaDowngrader.LOGGER.info("Deleted old {}", outputFile);
+        }
+        if (!outputFile.canWrite()) {
+            JavaDowngrader.LOGGER.error("Cannot write to {}", outputFile);
+            System.exit(1);
         }
 
         try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
             final Path inRoot = inFs.getRootDirectories().iterator().next();
             final TransformerManager transformerManager = new TransformerManager(new PathClassProvider(inRoot));
             transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(
-                transformerManager, targetVersion.getVersion(),
-                c -> Files.isRegularFile(inRoot.resolve(ASMUtils.slash(c).concat(".class")))
+                    transformerManager, targetVersion.getVersion(),
+                    c -> Files.isRegularFile(inRoot.resolve(ASMUtils.slash(c).concat(".class")))
             ));
 
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
                 final Path outRoot = outFs.getRootDirectories().iterator().next();
                 final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
                 try (Stream<Path> stream = Files.walk(inRoot)) {
-                    stream.forEach(path -> threadPool.execute(() -> {
-                        try {
-                            final String relative = inRoot.relativize(path).toString();
-                            final Path inOther = outRoot.resolve(relative);
-                            if (Files.isDirectory(path)) {
-                                Files.createDirectories(inOther);
-                                return;
-                            }
-                            final Path parent = inOther.getParent();
-                            if (parent != null) {
-                                Files.createDirectories(parent);
-                            }
-                            if (!relative.endsWith(".class")) {
-                                Files.copy(path, inOther);
-                                return;
-                            }
-                            final String className = ASMUtils.dot(relative.substring(0, relative.length() - 6));
-                            final byte[] bytecode = Files.readAllBytes(path);
-                            final byte[] result = transformerManager.transform(className, bytecode);
-                            Files.write(inOther, result != null ? result : bytecode);
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
+                    final List<Callable<Void>> tasks = stream.map(path -> (Callable<Void>) () -> {
+                        final String relative = inRoot.relativize(path).toString();
+                        final Path inOther = outRoot.resolve(relative);
+                        if (Files.isDirectory(path)) {
+                            Files.createDirectories(inOther);
+                            return null;
                         }
-                    }));
-                }
-                threadPool.shutdown();
-                while (true) {
-                    if (threadPool.awaitTermination(1000, TimeUnit.MILLISECONDS)) break;
+                        final Path parent = inOther.getParent();
+                        if (parent != null) {
+                            Files.createDirectories(parent);
+                        }
+                        if (!relative.endsWith(".class")) {
+                            Files.copy(path, inOther);
+                            return null;
+                        }
+                        final String className = ASMUtils.dot(relative.substring(0, relative.length() - 6));
+                        final byte[] bytecode = Files.readAllBytes(path);
+                        final byte[] result = transformerManager.transform(className, bytecode);
+                        Files.write(inOther, result != null ? result : bytecode);
+
+                        return null;
+                    }).collect(Collectors.toList());
+                    final List<Future<Void>> futures = threadPool.invokeAll(tasks);
+                    threadPool.shutdown();
+                    while (true) {
+                        if (threadPool.awaitTermination(1000, TimeUnit.MILLISECONDS)) break;
+                    }
+                    for (Future<Void> future : futures) {
+                        try {
+                            future.get();
+                        } catch (ExecutionException e) {
+                            throw e.getCause();
+                        }
+                    }
                 }
             }
         }
