@@ -123,8 +123,9 @@ public class Main {
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
                 final Path outRoot = outFs.getRootDirectories().iterator().next();
                 final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+                final List<Callable<Void>> tasks;
                 try (Stream<Path> stream = Files.walk(inRoot)) {
-                    final List<Callable<Void>> tasks = stream.map(path -> (Callable<Void>) () -> {
+                    tasks = stream.map(path -> (Callable<Void>) () -> {
                         final String relative = inRoot.relativize(path).toString();
                         final Path inOther = outRoot.resolve(relative);
                         if (Files.isDirectory(path)) {
@@ -146,17 +147,17 @@ public class Main {
 
                         return null;
                     }).collect(Collectors.toList());
-                    final List<Future<Void>> futures = threadPool.invokeAll(tasks);
-                    threadPool.shutdown();
-                    while (true) {
-                        if (threadPool.awaitTermination(1000, TimeUnit.MILLISECONDS)) break;
-                    }
-                    for (Future<Void> future : futures) {
-                        try {
-                            future.get();
-                        } catch (ExecutionException e) {
-                            throw e.getCause();
-                        }
+                }
+                final List<Future<Void>> futures = threadPool.invokeAll(tasks);
+                threadPool.shutdown();
+                while (true) {
+                    if (threadPool.awaitTermination(1000, TimeUnit.MILLISECONDS)) break;
+                }
+                for (Future<Void> future : futures) {
+                    try {
+                        future.get();
+                    } catch (ExecutionException e) {
+                        throw e.getCause();
                     }
                 }
             }
