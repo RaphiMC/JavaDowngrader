@@ -26,7 +26,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build-jars
-      - name: Test Geyser
-        run: |
-          curl -Lo Geyser-Standalone.jar https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/standalone
-          java -jar JavaDowngrader-Standalone-*.jar -i Geyser-Standalone.jar -o Geyser-Standalone-out.jar -v 8
+      - name: Download Geyser
+        run: curl -Lo Geyser-Standalone.jar https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/standalone
+      - name: Downgrade Geyser
+        run: java -jar JavaDowngrader-Standalone-*.jar -i Geyser-Standalone.jar -o Geyser-Standalone-out.jar -v 8
