@@ -28,5 +28,5 @@ jobs:
           name: build-jars
       - name: Test Geyser
         run: |
-          curl -o Geyser-Standalone.jar https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/standalone
+          curl -Lo Geyser-Standalone.jar https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/standalone
           java -jar JavaDowngrader-Standalone-*.jar -i Geyser-Standalone.jar -o Geyser-Standalone-out.jar -v 8
