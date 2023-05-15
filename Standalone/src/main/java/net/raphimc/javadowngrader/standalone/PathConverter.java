@@ -33,9 +33,9 @@ public class PathConverter implements ValueConverter<List<File>> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public Class<? extends List<File>> valueType() {
-        return (Class<? extends List<File>>) List.class;
+        return (Class) List.class;
     }
 
     @Override
