@@ -18,6 +18,7 @@
 package net.raphimc.javadowngrader.transformer.j12;
 
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
+import net.raphimc.javadowngrader.transformer.j12.methodcallreplacer.FileSystemsNewFileSystemMCR;
 import org.objectweb.asm.Opcodes;
 
 public class Java13ToJava12 extends DowngradingTransformer {
@@ -25,8 +26,7 @@ public class Java13ToJava12 extends DowngradingTransformer {
     public Java13ToJava12() {
         super(Opcodes.V13, Opcodes.V12);
 
-        // TODO
-        //this.registerMethodCallReplacement(Opcodes.INVOKESTATIC, "java/nio/file/FileSystems", "newFileSystem", "(Ljava/nio/file/Path;Ljava/util/Map;Ljava/lang/ClassLoader;)Ljava/nio/file/FileSystem;", null);
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/nio/file/FileSystems", "newFileSystem", FileSystemsNewFileSystemCreator.NEWFILESYSTEM_DESC, new FileSystemsNewFileSystemMCR());
     }
 
 }

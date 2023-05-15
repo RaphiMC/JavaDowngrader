@@ -77,10 +77,13 @@ public class Main {
         }
 
         final File outputFile = new File(options.valueOf(outputLocation));
-        outputFile.getParentFile().mkdirs();
-        if (!outputFile.getParentFile().isDirectory()) {
-            JavaDowngrader.LOGGER.error("Failed to create output directory");
-            System.exit(1);
+        final File parentFile = outputFile.getParentFile();
+        if (parentFile != null) {
+            outputFile.getParentFile().mkdirs();
+            if (!outputFile.getParentFile().isDirectory()) {
+                JavaDowngrader.LOGGER.error("Failed to create output directory");
+                System.exit(1);
+            }
         }
 
         try {

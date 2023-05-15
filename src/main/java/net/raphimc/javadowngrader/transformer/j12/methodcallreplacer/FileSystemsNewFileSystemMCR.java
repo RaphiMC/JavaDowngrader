@@ -15,28 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
+package net.raphimc.javadowngrader.transformer.j12.methodcallreplacer;
 
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
-import net.raphimc.javadowngrader.transformer.j8.InputStreamTransferToCreator;
+import net.raphimc.javadowngrader.transformer.j12.FileSystemsNewFileSystemCreator;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import static net.raphimc.javadowngrader.transformer.j8.InputStreamTransferToCreator.TRANSFERTO_DESC;
-import static net.raphimc.javadowngrader.transformer.j8.InputStreamTransferToCreator.TRANSFERTO_NAME;
+import static net.raphimc.javadowngrader.transformer.j12.FileSystemsNewFileSystemCreator.NEWFILESYSTEM_DESC;
+import static net.raphimc.javadowngrader.transformer.j12.FileSystemsNewFileSystemCreator.NEWFILESYSTEM_NAME;
 
-public class InputStreamTransferToMCR implements MethodCallReplacer {
-
+public class FileSystemsNewFileSystemMCR implements MethodCallReplacer {
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, MethodInsnNode methodInsn) {
-        InputStreamTransferToCreator.ensureHasMethod(classNode);
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, MethodInsnNode methodInsn) {
+        FileSystemsNewFileSystemCreator.ensureHasMethod(classNode);
 
         final InsnList replacement = new InsnList();
-        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, classNode.name, TRANSFERTO_NAME, TRANSFERTO_DESC));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, classNode.name, NEWFILESYSTEM_NAME, NEWFILESYSTEM_DESC));
         return replacement;
     }
-
 }

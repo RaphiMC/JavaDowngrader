@@ -20,6 +20,8 @@ package net.raphimc.javadowngrader.standalone;
 import joptsimple.ValueConversionException;
 import joptsimple.ValueConverter;
 
+import java.util.StringJoiner;
+
 public class JavaVersionEnumConverter implements ValueConverter<JavaVersion> {
 
     @Override
@@ -38,11 +40,11 @@ public class JavaVersionEnumConverter implements ValueConverter<JavaVersion> {
 
     @Override
     public String valuePattern() {
-        StringBuilder s = new StringBuilder();
+        final StringJoiner sj = new StringJoiner(", ", "[", "]");
         for (JavaVersion version : JavaVersion.values()) {
-            s.append((s.length() == 0) ? "" : ", ").append(version.getName());
+            sj.add(version.getName());
         }
-        return "[" + s + "]";
+        return sj.toString();
     }
 
 }

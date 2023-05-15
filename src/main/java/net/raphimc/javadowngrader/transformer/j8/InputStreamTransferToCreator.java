@@ -28,7 +28,7 @@ public class InputStreamTransferToCreator {
     public static final String TRANSFERTO_NAME = "javadowngrader-transferTo";
     public static final String TRANSFERTO_DESC = "(Ljava/io/InputStream;Ljava/io/OutputStream;)J";
 
-    public static void ensureHasTransferToMethod(final ClassNode classNode) {
+    public static void ensureHasMethod(final ClassNode classNode) {
         if (ASMUtil.hasMethod(classNode, TRANSFERTO_NAME, TRANSFERTO_DESC)) return;
 
         final MethodVisitor transferTo = classNode.visitMethod(
