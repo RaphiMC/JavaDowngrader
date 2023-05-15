@@ -150,16 +150,16 @@ public class RecordReplacer {
                     equals.visitMethodInsn(
                             Opcodes.INVOKESTATIC,
                             Type.getInternalName(Float.class),
-                            "equals",
-                            "(FF)Z",
+                            "compare",
+                            "(FF)I",
                             false
                     );
                 } else if (component.descriptor.equals("D")) {
                     equals.visitMethodInsn(
                             Opcodes.INVOKESTATIC,
                             Type.getInternalName(Double.class),
-                            "equals",
-                            "(DD)Z",
+                            "compare",
+                            "(DD)I",
                             false
                     );
                 } else if (component.descriptor.equals("J")) {
