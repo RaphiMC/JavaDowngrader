@@ -28,7 +28,7 @@ import org.objectweb.asm.tree.MethodNode;
 public class CollectorsToUnmodifiableListMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/stream/Collectors", "toList", "()Ljava/util/stream/Collector;"));
         ToUnmodifiableHelper.toUnmodifiable(replacement, "List");

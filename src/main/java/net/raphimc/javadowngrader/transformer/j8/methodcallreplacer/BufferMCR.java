@@ -15,23 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.transformer.j10.methodcallreplacer;
+package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
 
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
-public class ListToArrayMCR implements MethodCallReplacer {
+public class BufferMCR implements MethodCallReplacer {
+
+    private final String bufferClass;
+
+    public BufferMCR(final String bufferClass) {
+        this.bufferClass = bufferClass;
+    }
 
     @Override
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
+        final String newDesc = Type.getMethodDescriptor(Type.getObjectType("java/nio/Buffer"), Type.getArgumentTypes(originalDesc));
+
         final InsnList replacement = new InsnList();
-
-        replacement.add(new InsnNode(Opcodes.ICONST_0));
-        replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/function/IntFunction", "apply", "(I)Ljava/lang/Object;"));
-        replacement.add(new TypeInsnNode(Opcodes.CHECKCAST, "[Ljava/lang/Object;"));
-        replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/List", "toArray", "([Ljava/lang/Object;)[Ljava/lang/Object;"));
-
+        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, this.bufferClass, originalName, newDesc));
+        replacement.add(new TypeInsnNode(Opcodes.CHECKCAST, this.bufferClass));
         return replacement;
     }
 

@@ -28,7 +28,7 @@ import static net.raphimc.javadowngrader.transformer.j8.InputStreamTransferToCre
 public class InputStreamReadAllBytesMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         InputStreamTransferToCreator.ensureHasMethod(classNode);
 
         final InsnList replacement = new InsnList();

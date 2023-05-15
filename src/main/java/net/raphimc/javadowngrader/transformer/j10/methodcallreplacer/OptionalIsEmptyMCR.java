@@ -24,7 +24,7 @@ import org.objectweb.asm.tree.*;
 public class OptionalIsEmptyMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
         LabelNode ifNeq = new LabelNode();

@@ -24,7 +24,7 @@ import org.objectweb.asm.tree.*;
 public class FilesReadStringMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
         if (originalDesc.equals("(Ljava/nio/file/Path;)Ljava/lang/String;")) {
