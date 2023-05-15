@@ -27,7 +27,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 
 public class ToUnmodifiableHelper {
     public static void toUnmodifiable(InsnList list, String type) {
-        final String classType = 'L' + type + ';';
+        final String classType = "Ljava/util/" + type + ';';
         final String methodType = '(' + classType + ')' + classType;
         list.add(new InvokeDynamicInsnNode(
             "apply",
@@ -43,7 +43,7 @@ public class ToUnmodifiableHelper {
             new Handle(
                 Opcodes.H_INVOKESTATIC,
                 "java/util/Collections",
-                "unmodifiable" + classType,
+                "unmodifiable" + type,
                 methodType,
                 false
             ),
