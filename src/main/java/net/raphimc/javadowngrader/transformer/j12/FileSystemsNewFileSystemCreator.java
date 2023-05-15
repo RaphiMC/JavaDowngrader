@@ -25,7 +25,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
 public class FileSystemsNewFileSystemCreator {
-    public static final String NEWFILESYSTEM_NAME = "javadowngrader-transferTo";
+    public static final String NEWFILESYSTEM_NAME = "javadowngrader-newFileSystem";
     public static final String NEWFILESYSTEM_DESC = "(Ljava/nio/file/Path;Ljava/util/Map;Ljava/lang/ClassLoader;)Ljava/nio/file/FileSystem;";
 
     public static void ensureHasMethod(final ClassNode classNode) {
