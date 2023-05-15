@@ -22,27 +22,27 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import net.lenni0451.classtransform.TransformerManager;
+import net.lenni0451.classtransform.utils.ASMUtils;
 import net.raphimc.javadowngrader.JavaDowngrader;
-import net.raphimc.javadowngrader.standalone.transform.JarClassProvider;
 import net.raphimc.javadowngrader.standalone.transform.JavaDowngraderTransformer;
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
-import org.apache.commons.compress.archivers.zip.ParallelScatterZipCreator;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.commons.compress.utils.IOUtils;
+import net.raphimc.javadowngrader.standalone.transform.PathClassProvider;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
+import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.zip.Deflater;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -87,67 +87,72 @@ public class Main {
         }
 
         try {
+            final long start = System.nanoTime();
             doConversion(inputFile, outputFile, options.valueOf(version));
+            final long end = System.nanoTime();
+            JavaDowngrader.LOGGER.info(
+                "Done in {}.",
+                Duration.ofNanos(end - start)
+                    .toString()
+                    .substring(2)
+                    .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                    .toLowerCase(Locale.ROOT)
+            );
         } catch (Throwable e) {
             JavaDowngrader.LOGGER.error("Error while converting jar file. Please report this issue on the JavaDowngrader GitHub page", e);
             System.exit(1);
         }
     }
 
-    private static void doConversion(final File inputFile, final File outputFile, final JavaVersion targetVersion) throws IOException, ExecutionException, InterruptedException {
-        final Map<String, byte[]> classes = new HashMap<>();
-        final Map<String, byte[]> output = new HashMap<>();
+    private static void doConversion(final File inputFile, final File outputFile, final JavaVersion targetVersion) throws IOException, URISyntaxException, InterruptedException {
+        JavaDowngrader.LOGGER.info("Downgrading classes to Java {}", targetVersion.getName());
+        if (outputFile.delete()) {
+            JavaDowngrader.LOGGER.info("Deleted old {}", outputFile);
+        }
 
-        JavaDowngrader.LOGGER.info("Reading input file");
-        final ZipFile zipFile = new ZipFile(inputFile);
-        final Enumeration<? extends ZipArchiveEntry> entries = zipFile.getEntries();
-        while (entries.hasMoreElements()) {
-            final ZipArchiveEntry zipEntry = entries.nextElement();
-            if (zipEntry.getName().endsWith("/")) continue;
-            final byte[] bytes = new byte[(int) zipEntry.getSize()];
-            IOUtils.readFully(zipFile.getInputStream(zipEntry), bytes);
-            if (zipEntry.getName().toLowerCase().endsWith(".class")) {
-                final String name = zipEntry.getName().substring(0, zipEntry.getName().length() - 6).replace('/', '.');
-                classes.put(name, bytes);
-            } else {
-                output.put(zipEntry.getName(), bytes);
+        try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
+            final Path inRoot = inFs.getRootDirectories().iterator().next();
+            final TransformerManager transformerManager = new TransformerManager(new PathClassProvider(inRoot));
+            transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(
+                transformerManager, targetVersion.getVersion(),
+                c -> Files.isRegularFile(inRoot.resolve(ASMUtils.slash(c).concat(".class")))
+            ));
+
+            try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
+                final Path outRoot = outFs.getRootDirectories().iterator().next();
+                final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+                try (Stream<Path> stream = Files.walk(inRoot)) {
+                    stream.forEach(path -> threadPool.execute(() -> {
+                        try {
+                            final String relative = inRoot.relativize(path).toString();
+                            final Path inOther = outRoot.resolve(relative);
+                            if (Files.isDirectory(path)) {
+                                Files.createDirectories(inOther);
+                                return;
+                            }
+                            final Path parent = inOther.getParent();
+                            if (parent != null) {
+                                Files.createDirectories(parent);
+                            }
+                            if (!relative.endsWith(".class")) {
+                                Files.copy(path, inOther);
+                                return;
+                            }
+                            final String className = ASMUtils.dot(relative.substring(0, relative.length() - 6));
+                            final byte[] bytecode = Files.readAllBytes(path);
+                            final byte[] result = transformerManager.transform(className, bytecode);
+                            Files.write(inOther, result != null ? result : bytecode);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    }));
+                }
+                threadPool.shutdown();
+                while (true) {
+                    if (threadPool.awaitTermination(1000, TimeUnit.MILLISECONDS)) break;
+                }
             }
         }
-        zipFile.close();
-
-        JavaDowngrader.LOGGER.info("Downgrading classes to Java " + targetVersion.getName());
-        final TransformerManager transformerManager = new TransformerManager(new JarClassProvider(classes));
-        transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(transformerManager, targetVersion.getVersion(), classes.keySet()));
-
-        for (Map.Entry<String, byte[]> entry : classes.entrySet()) {
-            final String zipName = entry.getKey().replace('.', '/') + ".class";
-            final byte[] result = transformerManager.transform(entry.getKey(), entry.getValue());
-            if (result != null) {
-                output.put(zipName, result);
-            } else {
-                output.put(zipName, entry.getValue());
-            }
-        }
-
-        JavaDowngrader.LOGGER.info("Writing output file");
-        final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        final FileOutputStream fos = new FileOutputStream(outputFile);
-        final JarArchiveOutputStream jos = new JarArchiveOutputStream(fos);
-        final ParallelScatterZipCreator fastZip = new ParallelScatterZipCreator(threadPool);
-        jos.setMethod(Deflater.DEFLATED);
-        jos.setLevel(Deflater.BEST_COMPRESSION);
-
-        for (Map.Entry<String, byte[]> entry : output.entrySet()) {
-            final JarArchiveEntry jarEntry = new JarArchiveEntry(entry.getKey());
-            jarEntry.setMethod(JarArchiveEntry.DEFLATED);
-            fastZip.addArchiveEntry(jarEntry, () -> new ByteArrayInputStream(entry.getValue()));
-        }
-
-        fastZip.writeTo(jos);
-        jos.flush();
-        jos.close();
-        threadPool.shutdown();
-        JavaDowngrader.LOGGER.info("Done");
     }
 
 }
