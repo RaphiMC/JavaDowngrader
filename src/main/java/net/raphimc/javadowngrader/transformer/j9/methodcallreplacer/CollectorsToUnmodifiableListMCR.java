@@ -18,11 +18,11 @@
 package net.raphimc.javadowngrader.transformer.j9.methodcallreplacer;
 
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
+import net.raphimc.javadowngrader.util.Constants;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.*;
 
 public class CollectorsToUnmodifiableListMCR implements MethodCallReplacer {
 
@@ -30,7 +30,32 @@ public class CollectorsToUnmodifiableListMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
         final InsnList replacement = new InsnList();
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/stream/Collectors", "toList", "()Ljava/util/stream/Collector;"));
-        // TODO: Should be unmodifiable
+        replacement.add(new InvokeDynamicInsnNode(
+            "apply",
+            "()Ljava/util/function/Function;",
+            new Handle(
+                Opcodes.H_INVOKESTATIC,
+                "java/lang/invoke/LambdaMetafactory",
+                "metafactory",
+                Constants.METAFACTORY_DESC,
+                false
+            ),
+            Type.getMethodType("(Ljava/lang/Object;)Ljava/lang/Object;"),
+            new Handle(
+                Opcodes.H_INVOKESTATIC,
+                "java/util/Collections",
+                "unmodifiableList",
+                "(Ljava/util/List;)Ljava/util/List;",
+                false
+            ),
+            Type.getMethodType("(Ljava/util/List;)Ljava/util/List;")
+        ));
+        replacement.add(new MethodInsnNode(
+            Opcodes.INVOKESTATIC,
+            "java/util/stream/Collectors",
+            "collectingAndThen",
+            "(Ljava/util/stream/Collector;Ljava/util/function/Function;)Ljava/util/stream/Collector;"
+        ));
         return replacement;
     }
 

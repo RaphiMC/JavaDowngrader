@@ -17,6 +17,7 @@
  */
 package net.raphimc.javadowngrader.transformer;
 
+import net.raphimc.javadowngrader.util.Constants;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -77,7 +78,7 @@ public abstract class DowngradingTransformer {
                     } else if (insn instanceof InvokeDynamicInsnNode) {
                         final InvokeDynamicInsnNode invokeDynamicInsn = (InvokeDynamicInsnNode) insn;
 
-                        if (invokeDynamicInsn.bsm.getOwner().equals("java/lang/invoke/LambdaMetafactory") && invokeDynamicInsn.bsm.getName().equals("metafactory") && invokeDynamicInsn.bsm.getDesc().equals("(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;")) {
+                        if (invokeDynamicInsn.bsm.getOwner().equals("java/lang/invoke/LambdaMetafactory") && invokeDynamicInsn.bsm.getName().equals("metafactory") && invokeDynamicInsn.bsm.getDesc().equals(Constants.METAFACTORY_DESC)) {
                             for (int i = 0; i < invokeDynamicInsn.bsmArgs.length; i++) {
                                 final Object arg = invokeDynamicInsn.bsmArgs[i];
                                 if (!(arg instanceof Handle)) continue;
