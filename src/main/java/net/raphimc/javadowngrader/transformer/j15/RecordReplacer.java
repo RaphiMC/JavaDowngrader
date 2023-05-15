@@ -53,6 +53,9 @@ public class RecordReplacer {
 
         classNode.access &= ~Opcodes.ACC_RECORD;
         classNode.superName = "java/lang/Object";
+        if (classNode.signature != null) {
+            classNode.signature = classNode.signature.replace("Ljava/lang/Record;", "Ljava/lang/Object;");
+        }
 
         for (MethodNode methodNode : classNode.methods) {
             if (methodNode.name.equals("<init>")) {
