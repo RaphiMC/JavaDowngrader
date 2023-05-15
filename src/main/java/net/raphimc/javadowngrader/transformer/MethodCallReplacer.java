@@ -23,6 +23,6 @@ import org.objectweb.asm.tree.MethodNode;
 
 public interface MethodCallReplacer {
 
-    InsnList getReplacement(final ClassNode classNode, final MethodNode method, final String originalDesc);
+    InsnList getReplacement(final ClassNode classNode, final MethodNode method, String originalName, final String originalDesc);
 
 }

@@ -72,7 +72,7 @@ public abstract class DowngradingTransformer {
                             replacer = this.methodCallReplacers.get(methodInsn.owner + ';' + methodInsn.name);
                         }
                         if (replacer != null) {
-                            methodNode.instructions.insertBefore(methodInsn, replacer.getReplacement(classNode, methodNode, methodInsn.desc));
+                            methodNode.instructions.insertBefore(methodInsn, replacer.getReplacement(classNode, methodNode, methodInsn.name, methodInsn.desc));
                             methodNode.instructions.remove(methodInsn);
                         }
                     } else if (insn instanceof InvokeDynamicInsnNode) {
@@ -94,7 +94,7 @@ public abstract class DowngradingTransformer {
                                     for (int i1 = 0; i1 < argumentTypes.length; i1++) {
                                         bridgeMethod.instructions.add(new VarInsnNode(argumentTypes[i1].getOpcode(Opcodes.ILOAD), i1));
                                     }
-                                    bridgeMethod.instructions.add(replacer.getReplacement(classNode, bridgeMethod, handle.getDesc()));
+                                    bridgeMethod.instructions.add(replacer.getReplacement(classNode, bridgeMethod, handle.getName(), handle.getDesc()));
                                     bridgeMethod.instructions.add(new InsnNode(Type.getReturnType(handle.getDesc()).getOpcode(Opcodes.IRETURN)));
                                     classNode.methods.add(bridgeMethod);
 

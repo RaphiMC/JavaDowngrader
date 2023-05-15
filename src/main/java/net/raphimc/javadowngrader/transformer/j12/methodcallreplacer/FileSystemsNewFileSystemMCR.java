@@ -33,7 +33,7 @@ public class FileSystemsNewFileSystemMCR implements MethodCallReplacer {
     }
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc) {
         FileSystemsNewFileSystemCreator.ensureHasMethod(classNode);
 
         final InsnList replacement = new InsnList();

@@ -25,7 +25,7 @@ import org.objectweb.asm.tree.*;
 public class MapOfEntriesMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
         final int mapVarIndex = ASMUtil.getFreeVarIndex(methodNode);

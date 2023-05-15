@@ -27,7 +27,7 @@ import org.objectweb.asm.tree.MethodNode;
 public class PathOfMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc) {
         final InsnList result = new InsnList();
         result.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/nio/file/Paths", "get", originalDesc));
         return result;
