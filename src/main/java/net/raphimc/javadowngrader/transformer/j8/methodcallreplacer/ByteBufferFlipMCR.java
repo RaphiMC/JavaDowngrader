@@ -24,15 +24,10 @@ import org.objectweb.asm.tree.*;
 public class ByteBufferFlipMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, MethodInsnNode methodInsn) {
-
-        final MethodInsnNode newInsn = (MethodInsnNode) methodInsn.clone(null);
-        newInsn.desc = "()Ljava/nio/Buffer;";
-
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
         final InsnList replacement = new InsnList();
-        replacement.add(newInsn);
+        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/nio/ByteBuffer", "flip", "()Ljava/nio/Buffer;"));
         replacement.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/nio/ByteBuffer"));
-
         return replacement;
     }
 

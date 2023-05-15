@@ -24,7 +24,7 @@ import org.objectweb.asm.tree.*;
 public class SetCopyOfMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, MethodInsnNode methodInsn) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
         final InsnList replacement = new InsnList();
 
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/HashSet"));

@@ -27,7 +27,7 @@ import org.objectweb.asm.tree.MethodNode;
 public class StringIsBlankMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, MethodInsnNode methodInsn) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
         final InsnList replacement = new InsnList();
 
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "trim", "()Ljava/lang/String;"));

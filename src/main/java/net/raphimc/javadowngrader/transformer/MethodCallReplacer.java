@@ -19,11 +19,10 @@ package net.raphimc.javadowngrader.transformer;
 
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public interface MethodCallReplacer {
 
-    InsnList getReplacement(final ClassNode classNode, final MethodNode method, final MethodInsnNode methodInsn);
+    InsnList getReplacement(final ClassNode classNode, final MethodNode method, final String originalDesc);
 
 }

@@ -18,21 +18,19 @@
 package net.raphimc.javadowngrader.transformer.j10.methodcallreplacer;
 
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class PathOfMCR implements MethodCallReplacer {
+
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, MethodInsnNode methodInsn) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalDesc) {
         final InsnList result = new InsnList();
-
-        final MethodInsnNode newInsn = (MethodInsnNode) methodInsn.clone(null);
-        newInsn.owner = "java/nio/file/Paths";
-        newInsn.name = "get";
-
-        result.add(newInsn);
+        result.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/nio/file/Paths", "get", originalDesc));
         return result;
     }
+
 }

@@ -17,10 +17,10 @@
  */
 package net.raphimc.javadowngrader.transformer;
 
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -71,8 +71,35 @@ public abstract class DowngradingTransformer {
                             replacer = this.methodCallReplacers.get(methodInsn.owner + ';' + methodInsn.name);
                         }
                         if (replacer != null) {
-                            methodNode.instructions.insertBefore(methodInsn, replacer.getReplacement(classNode, methodNode, methodInsn));
+                            methodNode.instructions.insertBefore(methodInsn, replacer.getReplacement(classNode, methodNode, methodInsn.desc));
                             methodNode.instructions.remove(methodInsn);
+                        }
+                    } else if (insn instanceof InvokeDynamicInsnNode) {
+                        final InvokeDynamicInsnNode invokeDynamicInsn = (InvokeDynamicInsnNode) insn;
+
+                        if (invokeDynamicInsn.bsm.getOwner().equals("java/lang/invoke/LambdaMetafactory") && invokeDynamicInsn.bsm.getName().equals("metafactory") && invokeDynamicInsn.bsm.getDesc().equals("(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;")) {
+                            for (int i = 0; i < invokeDynamicInsn.bsmArgs.length; i++) {
+                                final Object arg = invokeDynamicInsn.bsmArgs[i];
+                                if (!(arg instanceof Handle)) continue;
+                                final Handle handle = (Handle) arg;
+
+                                MethodCallReplacer replacer = this.methodCallReplacers.get(handle.getOwner() + ';' + handle.getName() + handle.getDesc());
+                                if (replacer == null) {
+                                    replacer = this.methodCallReplacers.get(handle.getOwner() + ';' + handle.getName());
+                                }
+                                if (replacer != null) {
+                                    final MethodNode bridgeMethod = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC, "javadowngrader-bridge$" + System.nanoTime(), handle.getDesc(), null, null);
+                                    final Type[] argumentTypes = Type.getArgumentTypes(handle.getDesc());
+                                    for (int i1 = 0; i1 < argumentTypes.length; i1++) {
+                                        bridgeMethod.instructions.add(new VarInsnNode(argumentTypes[i1].getOpcode(Opcodes.ILOAD), i1));
+                                    }
+                                    bridgeMethod.instructions.add(replacer.getReplacement(classNode, bridgeMethod, handle.getDesc()));
+                                    bridgeMethod.instructions.add(new InsnNode(Type.getReturnType(handle.getDesc()).getOpcode(Opcodes.IRETURN)));
+                                    classNode.methods.add(bridgeMethod);
+
+                                    invokeDynamicInsn.bsmArgs[i] = new Handle(Opcodes.H_INVOKESTATIC, classNode.name, bridgeMethod.name, bridgeMethod.desc, (classNode.access & Opcodes.ACC_INTERFACE) != 0);
+                                }
+                            }
                         }
                     }
                 }

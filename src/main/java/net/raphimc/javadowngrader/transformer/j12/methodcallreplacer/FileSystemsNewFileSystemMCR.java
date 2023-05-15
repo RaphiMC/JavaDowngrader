@@ -30,7 +30,7 @@ import static net.raphimc.javadowngrader.transformer.j12.FileSystemsNewFileSyste
 
 public class FileSystemsNewFileSystemMCR implements MethodCallReplacer {
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, MethodInsnNode methodInsn) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalDesc) {
         FileSystemsNewFileSystemCreator.ensureHasMethod(classNode);
 
         final InsnList replacement = new InsnList();
