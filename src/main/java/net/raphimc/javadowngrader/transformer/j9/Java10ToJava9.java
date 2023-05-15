@@ -35,6 +35,8 @@ public class Java10ToJava9 extends DowngradingTransformer {
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/stream/Collectors", "toUnmodifiableSet", "()Ljava/util/stream/Collector;", new CollectorsToUnmodifiableSetMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/io/Reader", "transferTo", new ReaderTransferToMCR());
+
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "orElseThrow", "()Ljava/lang/Object;", new OptionalOrElseThrowMCR());
     }
 
 }
