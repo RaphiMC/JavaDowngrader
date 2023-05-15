@@ -104,12 +104,12 @@ public class Main {
 
     private static void doConversion(final File inputFile, final File outputFile, final JavaVersion targetVersion) throws Throwable {
         JavaDowngrader.LOGGER.info("Downgrading classes to Java {}", targetVersion.getName());
-        if (outputFile.delete()) {
-            JavaDowngrader.LOGGER.info("Deleted old {}", outputFile);
-        }
-        if (!outputFile.canWrite()) {
+        if (outputFile.isFile() && !outputFile.canWrite()) {
             JavaDowngrader.LOGGER.error("Cannot write to {}", outputFile);
             System.exit(1);
+        }
+        if (outputFile.delete()) {
+            JavaDowngrader.LOGGER.info("Deleted old {}", outputFile);
         }
 
         try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
