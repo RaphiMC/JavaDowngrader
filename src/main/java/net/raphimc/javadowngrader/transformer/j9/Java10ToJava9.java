@@ -30,7 +30,7 @@ public class Java10ToJava9 extends DowngradingTransformer {
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/List", "copyOf", "(Ljava/util/Collection;)Ljava/util/List;", new ListCopyOfMCR());
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Set", "copyOf", "(Ljava/util/Collection;)Ljava/util/Set;", new SetCopyOfMCR());
-        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Map", "copyOf", "(Ljava/util/Collection;)Ljava/util/Map;", new MapCopyOfMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Map", "copyOf", "(Ljava/util/Map;)Ljava/util/Map;", new MapCopyOfMCR());
     }
 
 }
