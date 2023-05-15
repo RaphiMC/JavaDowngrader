@@ -26,10 +26,10 @@ import org.objectweb.asm.tree.*;
 public class SetOfMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, MethodInsnNode methodInsn) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
         final InsnList replacement = new InsnList();
 
-        final Type[] args = Type.getArgumentTypes(methodInsn.desc);
+        final Type[] args = Type.getArgumentTypes(originalDesc);
         if (args.length != 1 || args[0].getSort() != Type.ARRAY) {
             final int freeVarIndex = ASMUtil.getFreeVarIndex(methodNode);
 

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.transformer.j10.methodcallreplacer;
+package net.raphimc.javadowngrader.transformer.j9.methodcallreplacer;
 
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import org.objectweb.asm.Opcodes;
@@ -24,13 +24,14 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-public class PathOfMCR implements MethodCallReplacer {
+public class CollectorsToUnmodifiableMapMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalDesc) {
-        final InsnList result = new InsnList();
-        result.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/nio/file/Paths", "get", originalDesc));
-        return result;
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
+        final InsnList replacement = new InsnList();
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/stream/Collectors", "toMap", "(Ljava/util/function/Function;Ljava/util/function/Function;)Ljava/util/stream/Collector;"));
+        // TODO: Should be unmodifiable
+        return replacement;
     }
 
 }

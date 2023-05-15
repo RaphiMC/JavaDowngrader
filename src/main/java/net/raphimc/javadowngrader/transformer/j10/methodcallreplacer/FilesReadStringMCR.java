@@ -24,18 +24,18 @@ import org.objectweb.asm.tree.*;
 public class FilesReadStringMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, MethodInsnNode methodInsn) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
         final InsnList replacement = new InsnList();
 
-        if (methodInsn.desc.equals("(Ljava/nio/file/Path;)Ljava/lang/String;")) {
+        if (originalDesc.equals("(Ljava/nio/file/Path;)Ljava/lang/String;")) {
             replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/nio/file/Files", "readAllBytes", "(Ljava/nio/file/Path;)[B"));
             replacement.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/nio/charset/StandardCharsets", "UTF_8", "Ljava/nio/charset/Charset;"));
-        } else if (methodInsn.desc.equals("(Ljava/nio/file/Path;Ljava/nio/charset/Charset;)Ljava/lang/String;")) {
+        } else if (originalDesc.equals("(Ljava/nio/file/Path;Ljava/nio/charset/Charset;)Ljava/lang/String;")) {
             replacement.add(new InsnNode(Opcodes.SWAP));
             replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/nio/file/Files", "readAllBytes", "(Ljava/nio/file/Path;)[B"));
             replacement.add(new InsnNode(Opcodes.SWAP));
         } else {
-            throw new RuntimeException("Unsupported method descriptor: " + methodInsn.desc);
+            throw new RuntimeException("Unsupported method descriptor: " + originalDesc);
         }
 
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/lang/String"));
