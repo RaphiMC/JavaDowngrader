@@ -19,6 +19,7 @@ jobs:
           name: build-jars
           path: Standalone/build/libs/*
   test-geyser:
+    runs-on: ubuntu-latest
     steps:
       - name: Download standalone JAR
         uses: actions/download-artifact@v3
