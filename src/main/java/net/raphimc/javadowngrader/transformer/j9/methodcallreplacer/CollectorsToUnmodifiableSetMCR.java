@@ -18,6 +18,7 @@
 package net.raphimc.javadowngrader.transformer.j9.methodcallreplacer;
 
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
+import net.raphimc.javadowngrader.transformer.j9.ToUnmodifiableHelper;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
@@ -30,7 +31,7 @@ public class CollectorsToUnmodifiableSetMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalDesc) {
         final InsnList replacement = new InsnList();
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/stream/Collectors", "toSet", "()Ljava/util/stream/Collector;"));
-        // TODO: Should be unmodifiable
+        ToUnmodifiableHelper.toUnmodifiable(replacement, "Set");
         return replacement;
     }
 
