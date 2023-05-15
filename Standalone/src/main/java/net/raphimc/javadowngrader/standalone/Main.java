@@ -141,7 +141,7 @@ public class Main {
                     //noinspection resource
                     return Files.walk(f.toPath())
                         .filter(Files::isRegularFile)
-                        .filter(p -> p.getFileName().endsWith(".jar"))
+                        .filter(p -> p.toString().endsWith(".jar"))
                         .map(Path::toFile);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
