@@ -45,10 +45,14 @@ public class SetOfMCR implements MethodCallReplacer {
                 replacement.add(new InsnNode(Opcodes.POP));
             }
             replacement.add(new VarInsnNode(Opcodes.ALOAD, freeVarIndex));
-            replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableSet", "(Ljava/util/Set;)Ljava/util/Set;"));
+        } else {
+            replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Arrays", "asList", "([Ljava/lang/Object;)Ljava/util/List;"));
+            replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/HashSet"));
+            replacement.add(new InsnNode(Opcodes.DUP_X1));
+            replacement.add(new InsnNode(Opcodes.SWAP));
+            replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/HashSet", "<init>", "(Ljava/util/Collection;)V"));
         }
-
-        // TODO
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableSet", "(Ljava/util/Set;)Ljava/util/Set;"));
 
         return replacement;
     }

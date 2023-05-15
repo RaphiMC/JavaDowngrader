@@ -30,30 +30,26 @@ public class MapOfMCR implements MethodCallReplacer {
         final InsnList replacement = new InsnList();
 
         final Type[] args = Type.getArgumentTypes(methodInsn.desc);
-        if (args.length != 1 || args[0].getSort() != Type.ARRAY) {
-            final int freeVarIndex = ASMUtil.getFreeVarIndex(methodNode);
+        final int freeVarIndex = ASMUtil.getFreeVarIndex(methodNode);
 
-            final int argCount = args.length;
-            if (argCount % 2 != 0) {
-                throw new RuntimeException("Map.of() requires an even number of arguments");
-            }
-
-            replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/HashMap"));
-            replacement.add(new InsnNode(Opcodes.DUP));
-            replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/HashMap", "<init>", "()V"));
-            replacement.add(new VarInsnNode(Opcodes.ASTORE, freeVarIndex));
-            for (int i = 0; i < argCount / 2; i++) {
-                replacement.add(new VarInsnNode(Opcodes.ALOAD, freeVarIndex));
-                replacement.add(new InsnNode(Opcodes.DUP_X2));
-                replacement.add(new InsnNode(Opcodes.POP));
-                replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"));
-                replacement.add(new InsnNode(Opcodes.POP));
-            }
-            replacement.add(new VarInsnNode(Opcodes.ALOAD, freeVarIndex));
-            replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableMap", "(Ljava/util/Map;)Ljava/util/Map;"));
+        final int argCount = args.length;
+        if (argCount % 2 != 0) {
+            throw new RuntimeException("Map.of() requires an even number of arguments");
         }
 
-        // TODO
+        replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/HashMap"));
+        replacement.add(new InsnNode(Opcodes.DUP));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/HashMap", "<init>", "()V"));
+        replacement.add(new VarInsnNode(Opcodes.ASTORE, freeVarIndex));
+        for (int i = 0; i < argCount / 2; i++) {
+            replacement.add(new VarInsnNode(Opcodes.ALOAD, freeVarIndex));
+            replacement.add(new InsnNode(Opcodes.DUP_X2));
+            replacement.add(new InsnNode(Opcodes.POP));
+            replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"));
+            replacement.add(new InsnNode(Opcodes.POP));
+        }
+        replacement.add(new VarInsnNode(Opcodes.ALOAD, freeVarIndex));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableMap", "(Ljava/util/Map;)Ljava/util/Map;"));
 
         return replacement;
     }

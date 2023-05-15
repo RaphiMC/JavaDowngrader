@@ -48,9 +48,9 @@ public class ListOfMCR implements MethodCallReplacer {
             replacement.add(new InsnNode(Opcodes.DUP));
             replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "reverse", "(Ljava/util/List;)V"));
             replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableList", "(Ljava/util/List;)Ljava/util/List;"));
+        } else {
+            replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Arrays", "asList", "([Ljava/lang/Object;)Ljava/util/List;"));
         }
-
-        // TODO
 
         return replacement;
     }
