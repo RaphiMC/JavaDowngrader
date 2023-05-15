@@ -31,11 +31,15 @@ public class Java9ToJava8 extends DowngradingTransformer {
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/List", "of", new ListOfMCR());
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Set", "of", new SetOfMCR());
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Map", "of", new MapOfMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Map", "entry", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/Map$Entry;", new MapEntryMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Map", "ofEntries", "([Ljava/util/Map$Entry;)Ljava/util/Map;", new MapOfEntriesMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/io/InputStream", "transferTo", "(Ljava/io/OutputStream;)J", new InputStreamTransferToMCR());
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/io/InputStream", "readAllBytes", "()[B", new InputStreamReadAllBytesMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNullElse", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new ObjectsRequireNonNullElseMCR());
+
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/nio/ByteBuffer", "flip", "()Ljava/nio/ByteBuffer;", new ByteBufferFlipMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/regex/Matcher", "appendReplacement", "(Ljava/lang/StringBuilder;Ljava/lang/String;)Ljava/util/regex/Matcher;", new MatcherAppendReplacementMCR());
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/regex/Matcher", "appendTail", "(Ljava/lang/StringBuilder;)Ljava/lang/StringBuilder;", new MatcherAppendTailMCR());
