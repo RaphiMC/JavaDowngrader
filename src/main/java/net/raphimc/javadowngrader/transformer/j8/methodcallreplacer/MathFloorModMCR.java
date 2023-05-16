@@ -15,18 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.transformer.j11;
+package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
 
-import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
-import net.raphimc.javadowngrader.transformer.j11.methodcallreplacer.CompletableFutureExceptionallyAsyncMCR;
+import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.*;
 
-public class Java12ToJava11 extends DowngradingTransformer {
+public class MathFloorModMCR implements MethodCallReplacer {
 
-    public Java12ToJava11() {
-        super(Opcodes.V12, Opcodes.V11);
+    @Override
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
+        final InsnList replacement = new InsnList();
 
-        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/concurrent/CompletableFuture", "exceptionallyAsync", "(Ljava/util/function/Function;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", new CompletableFutureExceptionallyAsyncMCR());
+        replacement.add(new InsnNode(Opcodes.I2L));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Math", "floorMod", "(JJ)J"));
+        replacement.add(new InsnNode(Opcodes.L2I));
+
+        return replacement;
     }
 
 }

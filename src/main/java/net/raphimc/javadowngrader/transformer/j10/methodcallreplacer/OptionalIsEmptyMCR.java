@@ -23,13 +23,19 @@ import org.objectweb.asm.tree.*;
 
 public class OptionalIsEmptyMCR implements MethodCallReplacer {
 
+    private final String optionalClass;
+
+    public OptionalIsEmptyMCR(final String optionalClass) {
+        this.optionalClass = optionalClass;
+    }
+
     @Override
     public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
         LabelNode ifNeq = new LabelNode();
         LabelNode end = new LabelNode();
-        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "isPresent", "()Z"));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, this.optionalClass, "isPresent", "()Z"));
         replacement.add(new JumpInsnNode(Opcodes.IFNE, ifNeq));
         replacement.add(new InsnNode(Opcodes.ICONST_1));
         replacement.add(new JumpInsnNode(Opcodes.GOTO, end));

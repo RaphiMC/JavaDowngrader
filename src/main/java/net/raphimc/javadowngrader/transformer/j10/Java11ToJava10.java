@@ -35,7 +35,10 @@ public class Java11ToJava10 extends DowngradingTransformer {
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/nio/file/Path", "of", new PathOfMCR());
 
-        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "isEmpty", "()Z", new OptionalIsEmptyMCR());
+        final String[] optionalClasses = new String[]{"java/util/Optional", "java/util/OptionalDouble", "java/util/OptionalInt", "java/util/OptionalLong"};
+        for (String optionalClass : optionalClasses) {
+            this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, optionalClass, "isEmpty", "()Z", new OptionalIsEmptyMCR(optionalClass));
+        }
 
         this.addMethodCallReplacer(Opcodes.INVOKEINTERFACE, "java/util/List", "toArray", "(Ljava/util/function/IntFunction;)[Ljava/lang/Object;", new ListToArrayMCR());
     }
