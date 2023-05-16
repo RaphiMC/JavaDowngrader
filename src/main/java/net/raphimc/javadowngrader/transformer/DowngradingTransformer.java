@@ -56,6 +56,10 @@ public abstract class DowngradingTransformer {
         this.methodCallReplacers.put(owner + ';' + name + descriptor, replacer);
     }
 
+    protected void addClassReplacement(final String name) {
+        this.classReplacements.put(name, Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + name);
+    }
+
     protected void addClassReplacement(final String oldName, final String newName) {
         this.classReplacements.put(oldName, newName);
     }

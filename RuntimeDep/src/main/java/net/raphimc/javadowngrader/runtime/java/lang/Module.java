@@ -15,12 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.util;
+package net.raphimc.javadowngrader.runtime.java.lang;
 
-public class Constants {
+public class Module {
 
-    public static final String JAVADOWNGRADER_RUNTIME_PACKAGE = "net/raphimc/javadowngrader/runtime/";
+    private final ModuleLayer layer;
 
-    public static final String METAFACTORY_DESC = "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;";
+    public Module() {
+        this.layer = new ModuleLayer();
+    }
+
+    public static Module _ClassGetModule(final Class<?> clazz) {
+        return new Module();
+    }
+
+    public ModuleLayer getLayer() {
+        return this.layer;
+    }
 
 }

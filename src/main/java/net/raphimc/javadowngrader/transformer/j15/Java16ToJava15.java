@@ -28,6 +28,8 @@ public class Java16ToJava15 extends DowngradingTransformer {
         super(Opcodes.V16, Opcodes.V15);
 
         this.addMethodCallReplacer(Opcodes.INVOKEINTERFACE, "java/util/stream/Stream", "toList", "()Ljava/util/List;", new StreamToListMCR());
+
+        this.addClassReplacement("java/lang/Record", "java/lang/Object");
     }
 
     @Override
