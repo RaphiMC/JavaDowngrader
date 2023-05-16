@@ -55,6 +55,9 @@ public class Java9ToJava8 extends DowngradingTransformer {
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/regex/Matcher", "appendReplacement", "(Ljava/lang/StringBuilder;Ljava/lang/String;)Ljava/util/regex/Matcher;", new MatcherAppendReplacementMCR());
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/regex/Matcher", "appendTail", "(Ljava/lang/StringBuilder;)Ljava/lang/StringBuilder;", new MatcherAppendTailMCR());
+
+        this.addClassReplacement("java/lang/StackWalker", "net/raphimc/javadowngrader/runtime/java/lang/StackWalker");
+        this.addClassReplacement("java/lang/StackWalker$Option", "net/raphimc/javadowngrader/runtime/java/lang/StackWalker$Option");
     }
 
     @Override

@@ -21,8 +21,12 @@ import net.raphimc.javadowngrader.util.Constants;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.ClassRemapper;
+import org.objectweb.asm.commons.SimpleRemapper;
 import org.objectweb.asm.tree.*;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +37,7 @@ public abstract class DowngradingTransformer {
     private final int targetVersion;
 
     private final Map<String, MethodCallReplacer> methodCallReplacers = new HashMap<>();
+    private final Map<String, String> classReplacements = new HashMap<>();
 
     public DowngradingTransformer(final int sourceVersion, final int targetVersion) {
         this.sourceVersion = sourceVersion;
@@ -49,6 +54,10 @@ public abstract class DowngradingTransformer {
 
     protected void addMethodCallReplacer(final int opcode, final String owner, final String name, final String descriptor, final MethodCallReplacer replacer) {
         this.methodCallReplacers.put(owner + ';' + name + descriptor, replacer);
+    }
+
+    protected void addClassReplacement(final String oldName, final String newName) {
+        this.classReplacements.put(oldName, newName);
     }
 
     public void transform(final ClassNode classNode) {
@@ -103,6 +112,25 @@ public abstract class DowngradingTransformer {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        if (!this.classReplacements.isEmpty()) {
+            final ClassNode remappedNode = new ClassNode();
+            final ClassRemapper classRemapper = new ClassRemapper(remappedNode, new SimpleRemapper(this.classReplacements));
+            classNode.accept(classRemapper);
+
+            // Modify the class inplace
+            for (Field field : ClassNode.class.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers())) continue;
+                if (Modifier.isFinal(field.getModifiers())) continue;
+                if (!Modifier.isPublic(field.getModifiers())) continue;
+
+                try {
+                    field.set(classNode, field.get(remappedNode));
+                } catch (Throwable t) {
+                    throw new RuntimeException("Failed to merge class nodes", t);
                 }
             }
         }

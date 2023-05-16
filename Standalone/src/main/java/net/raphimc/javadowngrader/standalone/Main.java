@@ -50,20 +50,20 @@ public class Main {
         final OptionSpec<Void> help = parser.acceptsAll(asList("help", "h", "?"), "Get a list of all arguments").forHelp();
 
         final OptionSpec<File> inputLocation = parser.acceptsAll(asList("input_file", "input", "i"), "The location of the input jar file")
-            .withRequiredArg()
-            .ofType(File.class)
-            .required();
+                .withRequiredArg()
+                .ofType(File.class)
+                .required();
         final OptionSpec<File> outputLocation = parser.acceptsAll(asList("output_file", "output", "o"), "The location of the output jar file")
-            .withRequiredArg()
-            .ofType(File.class)
-            .required();
+                .withRequiredArg()
+                .ofType(File.class)
+                .required();
         final OptionSpec<JavaVersion> version = parser.acceptsAll(asList("target_version", "version", "v"), "The target/output java version")
-            .withRequiredArg()
-            .withValuesConvertedBy(new JavaVersionEnumConverter())
-            .required();
-        final OptionSpec<List<File>> libraryPath = parser.acceptsAll(asList("library_path", "library", "l"), "Additional libraries to add to the classpath (required for stack mapping)")
-            .withRequiredArg()
-            .withValuesConvertedBy(new PathConverter());
+                .withRequiredArg()
+                .withValuesConvertedBy(new JavaVersionEnumConverter())
+                .required();
+        final OptionSpec<List<File>> libraryPath = parser.acceptsAll(asList("library_path", "library", "l"), "Additional libraries to add to the classpath (required for stack frames)")
+                .withRequiredArg()
+                .withValuesConvertedBy(new PathConverter());
 
         final OptionSet options;
         try {
@@ -118,10 +118,10 @@ public class Main {
     }
 
     private static void doConversion(
-        final File inputFile,
-        final File outputFile,
-        final JavaVersion targetVersion,
-        List<File> libraryPath
+            final File inputFile,
+            final File outputFile,
+            final JavaVersion targetVersion,
+            List<File> libraryPath
     ) throws Throwable {
         JavaDowngrader.LOGGER.info("Downgrading classes to Java {}", targetVersion.getName());
         if (outputFile.isFile() && !outputFile.canWrite()) {
@@ -133,20 +133,20 @@ public class Main {
         }
 
         try (Stream<File> stream = libraryPath.stream()
-            .flatMap(f -> {
-                if (f.isFile()) {
-                    return Stream.of(f);
-                }
-                try {
-                    //noinspection resource
-                    return Files.walk(f.toPath())
-                        .filter(Files::isRegularFile)
-                        .filter(p -> p.toString().endsWith(".jar"))
-                        .map(Path::toFile);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            })
+                .flatMap(f -> {
+                    if (f.isFile()) {
+                        return Stream.of(f);
+                    }
+                    try {
+                        //noinspection resource
+                        return Files.walk(f.toPath())
+                                .filter(Files::isRegularFile)
+                                .filter(p -> p.toString().endsWith(".jar"))
+                                .map(Path::toFile);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                })
         ) {
             libraryPath = stream.collect(Collectors.toList());
         }
@@ -154,7 +154,7 @@ public class Main {
         try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
             final Path inRoot = inFs.getRootDirectories().iterator().next();
             final TransformerManager transformerManager = new TransformerManager(
-                new PathClassProvider(inRoot, new LazyFileClassProvider(libraryPath, new BasicClassProvider()))
+                    new PathClassProvider(inRoot, new LazyFileClassProvider(libraryPath, new BasicClassProvider()))
             );
             transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(
                     transformerManager, targetVersion.getVersion(),
