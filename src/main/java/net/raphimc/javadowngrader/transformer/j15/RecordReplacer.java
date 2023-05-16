@@ -18,17 +18,18 @@
 package net.raphimc.javadowngrader.transformer.j15;
 
 import net.raphimc.javadowngrader.util.ASMUtil;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.RecordComponentNode;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public class RecordReplacer {
-
-    private static final String RECORD_DESC = "Ljava/lang/Record;";
-    private static final String OBJECT_DESC = "Ljava/lang/Object;";
 
     private static final String EQUALS_DESC = "(Ljava/lang/Object;)Z";
     private static final String HASHCODE_DESC = "()I";
@@ -49,56 +50,11 @@ public class RecordReplacer {
     }
 
     public static void replace(final ClassNode classNode) {
-        for (MethodNode methodNode : classNode.methods) {
-            methodNode.desc = methodNode.desc.replace(RECORD_DESC, OBJECT_DESC);
-
-            for (AbstractInsnNode insn : methodNode.instructions.toArray()) {
-                if (insn instanceof TypeInsnNode && insn.getOpcode() == Opcodes.CHECKCAST) {
-                    TypeInsnNode typeInsnNode = (TypeInsnNode) insn;
-                    if (typeInsnNode.desc.equals("java/lang/Record")) {
-                        typeInsnNode.desc = "java/lang/Object";
-                    }
-                } else if (insn instanceof InvokeDynamicInsnNode) {
-                    final InvokeDynamicInsnNode invokeDynamicInsn = (InvokeDynamicInsnNode) insn;
-
-                    for (int i = 0; i < invokeDynamicInsn.bsmArgs.length; i++) {
-                        final Object arg = invokeDynamicInsn.bsmArgs[i];
-                        if (arg instanceof Handle) {
-                            final Handle handle = (Handle) arg;
-                            if (handle.getDesc().contains(RECORD_DESC)) {
-                                invokeDynamicInsn.bsmArgs[i] = new Handle(handle.getTag(), handle.getOwner(), handle.getName(), handle.getDesc().replace(RECORD_DESC, OBJECT_DESC), handle.isInterface());
-                            }
-                        } else if (arg instanceof Type) {
-                            final Type type = (Type) arg;
-                            if (type.getDescriptor().contains(RECORD_DESC)) {
-                                invokeDynamicInsn.bsmArgs[i] = Type.getType(type.getDescriptor().replace(RECORD_DESC, OBJECT_DESC));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         if (!classNode.superName.equals("java/lang/Record")) return;
 
         classNode.access &= ~Opcodes.ACC_RECORD;
-        classNode.superName = "java/lang/Object";
         if (classNode.signature != null) {
-            classNode.signature = classNode.signature.replace(RECORD_DESC, OBJECT_DESC);
-        }
-
-        for (MethodNode methodNode : classNode.methods) {
-            if (methodNode.name.equals("<init>")) {
-                for (AbstractInsnNode insn : methodNode.instructions.toArray()) {
-                    if (insn.getOpcode() == Opcodes.INVOKESPECIAL) {
-                        MethodInsnNode min = (MethodInsnNode) insn;
-                        if (min.owner.equals("java/lang/Record")) {
-                            min.owner = "java/lang/Object";
-                            break;
-                        }
-                    }
-                }
-            }
+            classNode.signature = classNode.signature.replace("Ljava/lang/Record;", "Ljava/lang/Object;");
         }
 
         classNode.methods.remove(ASMUtil.getMethod(classNode, "equals", EQUALS_DESC));
