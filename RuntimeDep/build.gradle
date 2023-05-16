@@ -1,0 +1,30 @@
+plugins {
+    id "maven-publish"
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "reposilite"
+            url = "https://maven.lenni0451.net/releases"
+            credentials(PasswordCredentials)
+            authentication {
+                basic(BasicAuthentication)
+            }
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            groupId = project.maven_group
+            artifactId = project.maven_name
+            version = project.maven_version
+
+            from components.java
+        }
+    }
+}
