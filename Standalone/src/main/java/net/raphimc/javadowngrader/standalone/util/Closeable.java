@@ -15,22 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.runtime.java.lang;
+package net.raphimc.javadowngrader.standalone.util;
 
-public class Module {
+public interface Closeable<E extends Exception> extends AutoCloseable {
+    @Override
+    void close() throws E;
 
-    private final ModuleLayer layer;
-
-    public Module() {
-        this.layer = new ModuleLayer();
+    static <E extends Exception> Closeable<E> ofRunnable(Runnable run) {
+        return run::run;
     }
 
-    public static Module $Class$GetModule(final Class<?> clazz) {
-        return new Module();
+    static <E extends Exception> Closeable<E> none() {
+        return () -> {};
     }
-
-    public ModuleLayer getLayer() {
-        return this.layer;
-    }
-
 }

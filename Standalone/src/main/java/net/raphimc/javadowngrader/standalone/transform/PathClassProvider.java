@@ -18,7 +18,7 @@
 package net.raphimc.javadowngrader.standalone.transform;
 
 import net.lenni0451.classtransform.utils.tree.IClassProvider;
-import net.raphimc.javadowngrader.standalone.GeneralUtil;
+import net.raphimc.javadowngrader.standalone.util.GeneralUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

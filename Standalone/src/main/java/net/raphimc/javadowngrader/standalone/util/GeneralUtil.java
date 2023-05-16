@@ -15,11 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone;
+package net.raphimc.javadowngrader.standalone.util;
 
 import net.lenni0451.classtransform.utils.ASMUtils;
 
-import java.nio.file.Path;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,5 +59,15 @@ public class GeneralUtil {
             return path.toString();
         }
         return path.toString().replace(separator, "/");
+    }
+
+    @SuppressWarnings("DuplicateExpressions")
+    public static CloseableSupplier<Path, IOException> getPath(URI uri) throws IOException {
+        try {
+            return CloseableSupplier.ofValue(Paths.get(uri));
+        } catch (FileSystemNotFoundException e) {
+            final FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+            return CloseableSupplier.ofValue(Paths.get(uri), fs::close);
+        }
     }
 }

@@ -24,6 +24,9 @@ import net.raphimc.javadowngrader.JavaDowngrader;
 import net.raphimc.javadowngrader.standalone.transform.JavaDowngraderTransformer;
 import net.raphimc.javadowngrader.standalone.transform.LazyFileClassProvider;
 import net.raphimc.javadowngrader.standalone.transform.PathClassProvider;
+import net.raphimc.javadowngrader.standalone.util.CloseableSupplier;
+import net.raphimc.javadowngrader.standalone.util.GeneralUtil;
+import net.raphimc.javadowngrader.util.Constants;
 
 import java.io.File;
 import java.io.IOException;
@@ -165,6 +168,23 @@ public class Main {
                 final Path outRoot = outFs.getRootDirectories().iterator().next();
                 final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
                 final List<Callable<Void>> tasks;
+                try (CloseableSupplier<Path, IOException> supplier = GeneralUtil.getPath(Main.class.getResource('/' + Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + Constants.JAVADOWNGRADER_RUNTIME_ROOT).toURI())) {
+                    final Path runtimeRoot = supplier.get().getParent();
+                    try (Stream<Path> stream = Files.walk(runtimeRoot)) {
+                        stream.filter(Files::isRegularFile)
+                            .filter(p -> !p.getFileName().toString().equals(Constants.JAVADOWNGRADER_RUNTIME_ROOT))
+                            .forEach(p -> {
+                                final String relative = GeneralUtil.slashName(runtimeRoot.relativize(p));
+                                final Path dest = outRoot.resolve(Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + relative);
+                                try {
+                                    Files.createDirectories(dest.getParent());
+                                    Files.copy(p, dest);
+                                } catch (IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            });
+                    }
+                }
                 try (Stream<Path> stream = Files.walk(inRoot)) {
                     tasks = stream.map(path -> (Callable<Void>) () -> {
                         final String relative = GeneralUtil.slashName(inRoot.relativize(path));

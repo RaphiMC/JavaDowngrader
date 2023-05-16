@@ -15,22 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.runtime.java.lang;
+package net.raphimc.javadowngrader.runtime;
 
-public class Module {
-
-    private final ModuleLayer layer;
-
-    public Module() {
-        this.layer = new ModuleLayer();
-    }
-
-    public static Module $Class$GetModule(final Class<?> clazz) {
-        return new Module();
-    }
-
-    public ModuleLayer getLayer() {
-        return this.layer;
-    }
-
+/**
+ * This class is used to get the URI of this package.
+ */
+@SuppressWarnings("unused")
+public class RuntimeRoot {
 }

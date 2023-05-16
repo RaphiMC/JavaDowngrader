@@ -29,7 +29,7 @@ public class ClassGetModuleMCR implements MethodCallReplacer {
     @Override
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
-        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Module", "_ClassGetModule", "(Ljava/lang/Class;)Ljava/lang/Module;"));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Module", "$Class$GetModule", "(Ljava/lang/Class;)Ljava/lang/Module;"));
         return replacement;
     }
 

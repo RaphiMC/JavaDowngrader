@@ -20,6 +20,7 @@ package net.raphimc.javadowngrader.util;
 public class Constants {
 
     public static final String JAVADOWNGRADER_RUNTIME_PACKAGE = "net/raphimc/javadowngrader/runtime/";
+    public static final String JAVADOWNGRADER_RUNTIME_ROOT = "RuntimeRoot.class";
 
     public static final String METAFACTORY_DESC = "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;";
 
