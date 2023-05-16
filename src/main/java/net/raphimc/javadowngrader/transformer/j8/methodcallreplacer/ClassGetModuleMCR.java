@@ -15,12 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.util;
+package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
 
-public class Constants {
+import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
-    public static final String JAVADOWNGRADER_RUNTIME_PACKAGE = "net/raphimc/javadowngrader/runtime/";
+public class ClassGetModuleMCR implements MethodCallReplacer {
 
-    public static final String METAFACTORY_DESC = "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;";
+    @Override
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
+        final InsnList replacement = new InsnList();
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Module", "_ClassGetModule", "(Ljava/lang/Class;)Ljava/lang/Module;"));
+        return replacement;
+    }
 
 }

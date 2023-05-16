@@ -15,12 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.util;
+package net.raphimc.javadowngrader.runtime.java.lang;
 
-public class Constants {
+import java.util.Optional;
 
-    public static final String JAVADOWNGRADER_RUNTIME_PACKAGE = "net/raphimc/javadowngrader/runtime/";
+public class ModuleLayer {
 
-    public static final String METAFACTORY_DESC = "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;";
+    public Optional<Module> findModule(final String name) {
+        return Optional.empty();
+    }
 
 }
