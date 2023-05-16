@@ -38,6 +38,7 @@ public class Java9ToJava8 extends DowngradingTransformer {
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/io/InputStream", "readAllBytes", "()[B", new InputStreamReadAllBytesMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNullElse", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new ObjectsRequireNonNullElseMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNullElseGet", "(Ljava/lang/Object;Ljava/util/function/Supplier;)Ljava/lang/Object;", new ObjectsRequireNonNullElseGetMCR());
 
         final String[] bufferClasses = new String[]{"java/nio/ByteBuffer", "java/nio/ShortBuffer", "java/nio/CharBuffer", "java/nio/IntBuffer", "java/nio/FloatBuffer", "java/nio/DoubleBuffer", "java/nio/LongBuffer"};
         for (String bufferClass : bufferClasses) {
