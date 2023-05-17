@@ -65,6 +65,10 @@ public class Java9ToJava8 extends DowngradingTransformer {
         this.addClassReplacement("java/lang/ModuleLayer");
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/lang/Math", "floorMod", "(JI)I", new MathFloorModMCR());
+
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "ifPresentOrElse", new OptionalIfPresentOrElseMCR());
+
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "stream", new OptionalStreamMCR());
     }
 
     @Override
