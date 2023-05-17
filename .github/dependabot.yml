@@ -5,6 +5,10 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "gradle"
-    directory: "/Application"
+    directory: "/Standalone"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/RuntimeDep"
     schedule:
       interval: "daily"
