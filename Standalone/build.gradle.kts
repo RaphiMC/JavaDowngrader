@@ -11,8 +11,8 @@ configurations {
 
 repositories {
     maven {
-        name = "Lenni0451 Snapshots"
-        url = uri("https://maven.lenni0451.net/snapshots")
+        name = "Lenni0451 Releases"
+        url = uri("https://maven.lenni0451.net/releases")
     }
 }
 
