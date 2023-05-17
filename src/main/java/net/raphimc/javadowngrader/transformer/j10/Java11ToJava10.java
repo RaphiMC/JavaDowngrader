@@ -49,7 +49,7 @@ public class Java11ToJava10 extends DowngradingTransformer {
     }
 
     private void makePackagePrivate(final ClassNode classNode) {
-        if (classNode.nestHostClass == null) return;
+        if (classNode.nestHostClass == null && classNode.nestMembers == null) return;
         for (final MethodNode methodNode : classNode.methods) {
             methodNode.access &= ~Opcodes.ACC_PRIVATE;
         }

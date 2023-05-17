@@ -131,7 +131,7 @@ public class Main {
             final JavaVersion targetVersion,
             List<File> libraryPath
     ) throws Throwable {
-        LOGGER.info("Downgrading classes to Java {}", targetVersion.getName());
+        LOGGER.info("Downgrading {} to Java {}", inputFile, targetVersion.getName());
         if (outputFile.isFile() && !outputFile.canWrite()) {
             LOGGER.error("Cannot write to {}", outputFile);
             System.exit(1);
@@ -146,6 +146,7 @@ public class Main {
                         return Stream.of(f);
                     }
                     try {
+                        // IntelliJ doesn't understand that this stream then becomes part of the outer stream
                         //noinspection resource
                         return Files.walk(f.toPath())
                                 .filter(Files::isRegularFile)
