@@ -18,6 +18,9 @@
 package net.raphimc.javadowngrader.standalone;
 
 import joptsimple.*;
+import me.tongfei.progressbar.ProgressBar;
+import me.tongfei.progressbar.ProgressBarBuilder;
+import me.tongfei.progressbar.ProgressBarStyle;
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
 import net.raphimc.javadowngrader.standalone.transform.JavaDowngraderTransformer;
@@ -215,17 +218,17 @@ public class Main {
                         return null;
                     }).collect(Collectors.toList());
                 }
-                final List<Future<Void>> futures = threadPool.invokeAll(tasks);
+                final List<Future<Void>> futures = tasks.stream().map(threadPool::submit).collect(Collectors.toList());
                 threadPool.shutdown();
-                while (true) {
-                    if (threadPool.awaitTermination(1000, TimeUnit.MILLISECONDS)) break;
-                }
-                for (Future<Void> future : futures) {
+                for (Future<Void> future : ProgressBar.wrap(futures, new ProgressBarBuilder().setTaskName("Downgrading").setStyle(ProgressBarStyle.ASCII))) {
                     try {
                         future.get();
                     } catch (ExecutionException e) {
                         throw e.getCause();
                     }
+                }
+                if (!threadPool.awaitTermination(50, TimeUnit.MILLISECONDS)) {
+                    throw new IllegalStateException("get() calls should have terminated thread pool");
                 }
                 LOGGER.info("Writing final JAR");
             }

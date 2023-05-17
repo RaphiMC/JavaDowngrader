@@ -26,7 +26,9 @@ dependencies {
     include("org.apache.logging.log4j:log4j-core:2.20.0")
     include("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
 
-    implementation("org.jetbrains:annotations:24.0.1")
+    compileOnly("org.jetbrains:annotations:24.0.1")
+
+    include("me.tongfei:progressbar:0.9.4")
 }
 
 tasks.jar {
