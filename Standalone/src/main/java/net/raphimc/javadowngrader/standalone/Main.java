@@ -20,13 +20,14 @@ package net.raphimc.javadowngrader.standalone;
 import joptsimple.*;
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
-import net.raphimc.javadowngrader.JavaDowngrader;
 import net.raphimc.javadowngrader.standalone.transform.JavaDowngraderTransformer;
 import net.raphimc.javadowngrader.standalone.transform.LazyFileClassProvider;
 import net.raphimc.javadowngrader.standalone.transform.PathClassProvider;
 import net.raphimc.javadowngrader.standalone.util.CloseableSupplier;
 import net.raphimc.javadowngrader.standalone.util.GeneralUtil;
 import net.raphimc.javadowngrader.util.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +48,7 @@ import java.util.stream.Stream;
 import static java.util.Arrays.asList;
 
 public class Main {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws Throwable {
         final OptionParser parser = new OptionParser();
@@ -72,7 +74,7 @@ public class Main {
         try {
             options = parser.parse(args);
         } catch (OptionException | ValueConversionException e) {
-            JavaDowngrader.LOGGER.error("Error parsing options: " + e.getMessage());
+            LOGGER.error("Error parsing options: " + e.getMessage());
             parser.printHelpOn(System.out);
             System.exit(1);
             return;
@@ -84,11 +86,11 @@ public class Main {
 
         final File inputFile = options.valueOf(inputLocation);
         if (!inputFile.isFile()) {
-            JavaDowngrader.LOGGER.error("Input file does not exist or is not a file");
+            LOGGER.error("Input file does not exist or is not a file");
             System.exit(1);
         }
         if (!inputFile.canRead()) {
-            JavaDowngrader.LOGGER.error("Cannot read input file");
+            LOGGER.error("Cannot read input file");
             System.exit(1);
         }
 
@@ -97,7 +99,7 @@ public class Main {
         if (parentFile != null) {
             outputFile.getParentFile().mkdirs();
             if (!outputFile.getParentFile().isDirectory()) {
-                JavaDowngrader.LOGGER.error("Failed to create output directory");
+                LOGGER.error("Failed to create output directory");
                 System.exit(1);
             }
         }
@@ -106,7 +108,7 @@ public class Main {
             final long start = System.nanoTime();
             doConversion(inputFile, outputFile, options.valueOf(version), GeneralUtil.flatten(options.valuesOf(libraryPath)));
             final long end = System.nanoTime();
-            JavaDowngrader.LOGGER.info(
+            LOGGER.info(
                     "Done in {}.",
                     Duration.ofNanos(end - start)
                             .toString()
@@ -115,7 +117,7 @@ public class Main {
                             .toLowerCase(Locale.ROOT)
             );
         } catch (Throwable e) {
-            JavaDowngrader.LOGGER.error("Error while converting jar file. Please report this issue on the JavaDowngrader GitHub page", e);
+            LOGGER.error("Error while converting jar file. Please report this issue on the JavaDowngrader GitHub page", e);
             System.exit(1);
         }
     }
@@ -126,13 +128,13 @@ public class Main {
             final JavaVersion targetVersion,
             List<File> libraryPath
     ) throws Throwable {
-        JavaDowngrader.LOGGER.info("Downgrading classes to Java {}", targetVersion.getName());
+        LOGGER.info("Downgrading classes to Java {}", targetVersion.getName());
         if (outputFile.isFile() && !outputFile.canWrite()) {
-            JavaDowngrader.LOGGER.error("Cannot write to {}", outputFile);
+            LOGGER.error("Cannot write to {}", outputFile);
             System.exit(1);
         }
         if (outputFile.delete()) {
-            JavaDowngrader.LOGGER.info("Deleted old {}", outputFile);
+            LOGGER.info("Deleted old {}", outputFile);
         }
 
         try (Stream<File> stream = libraryPath.stream()
@@ -166,8 +168,7 @@ public class Main {
 
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
                 final Path outRoot = outFs.getRootDirectories().iterator().next();
-                final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-                final List<Callable<Void>> tasks;
+                LOGGER.info("Copying runtime classes");
                 try (CloseableSupplier<Path, IOException> supplier = GeneralUtil.getPath(Main.class.getResource('/' + Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + Constants.JAVADOWNGRADER_RUNTIME_ROOT).toURI())) {
                     final Path runtimeRoot = supplier.get().getParent();
                     try (Stream<Path> stream = Files.walk(runtimeRoot)) {
@@ -185,6 +186,10 @@ public class Main {
                             });
                     }
                 }
+                final int threadCount = Runtime.getRuntime().availableProcessors();
+                final ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
+                LOGGER.info("Downgrading classes with {} threads", threadCount);
+                final List<Callable<Void>> tasks;
                 try (Stream<Path> stream = Files.walk(inRoot)) {
                     tasks = stream.map(path -> (Callable<Void>) () -> {
                         final String relative = GeneralUtil.slashName(inRoot.relativize(path));
@@ -221,6 +226,7 @@ public class Main {
                         throw e.getCause();
                     }
                 }
+                LOGGER.info("Writing final JAR");
             }
         }
     }

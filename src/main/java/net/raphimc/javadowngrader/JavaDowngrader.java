@@ -32,14 +32,11 @@ import net.raphimc.javadowngrader.transformer.j20.Java21ToJava20;
 import net.raphimc.javadowngrader.transformer.j8.Java9ToJava8;
 import net.raphimc.javadowngrader.transformer.j9.Java10ToJava9;
 import org.objectweb.asm.tree.ClassNode;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class JavaDowngrader {
-
-    public static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(JavaDowngrader.class);
 
     private static final List<DowngradingTransformer> TRANSFORMER = new ArrayList<>();
 
