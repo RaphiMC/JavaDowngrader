@@ -22,6 +22,7 @@ import net.lenni0451.classtransform.utils.tree.IClassProvider;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.FileSystems;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -38,7 +39,11 @@ public class LazyFileClassProvider extends AbstractClassProvider implements Auto
         for (int i = 0; i < path.length; i++) {
             Object element = path[i];
             if (element instanceof File) {
-                path[i] = element = open((File)element);
+                synchronized (path) {
+                    if ((element = path[i]) instanceof File) {
+                        path[i] = element = open((File)element);
+                    }
+                }
             }
             try {
                 return ((PathClassProvider)element).getClass(name);
@@ -50,7 +55,7 @@ public class LazyFileClassProvider extends AbstractClassProvider implements Auto
 
     private static PathClassProvider open(File file) {
         try {
-            return new ClosingFileSystemClassProvider(FileSystems.getFileSystem(new URI("jar:" + file.toURI())), null);
+            return new ClosingFileSystemClassProvider(FileSystems.newFileSystem(new URI("jar:" + file.toURI()), Collections.emptyMap()), null);
         } catch (Exception e) {
             throw e instanceof RuntimeException ? (RuntimeException)e : new RuntimeException(e);
         }
