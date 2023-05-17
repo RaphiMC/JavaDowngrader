@@ -136,7 +136,7 @@ public class Main {
             LOGGER.error("Cannot write to {}", outputFile);
             System.exit(1);
         }
-        if (outputFile.delete()) {
+        if (Files.deleteIfExists(outputFile.toPath())) {
             LOGGER.info("Deleted old {}", outputFile);
         }
 
