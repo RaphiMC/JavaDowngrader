@@ -41,6 +41,8 @@ public class Java11ToJava10 extends DowngradingTransformer {
         }
 
         this.addMethodCallReplacer(Opcodes.INVOKEINTERFACE, "java/util/List", "toArray", "(Ljava/util/function/IntFunction;)[Ljava/lang/Object;", new ListToArrayMCR());
+
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/lang/Character", "toString", "(I)Ljava/lang/String;", new CharacterToStringMCR());
     }
 
     @Override

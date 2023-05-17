@@ -1,5 +1,6 @@
 plugins {
     java
+    application
 }
 
 val include: Configuration by configurations.creating
@@ -31,6 +32,10 @@ dependencies {
     include("me.tongfei:progressbar:0.9.4")
 }
 
+application {
+    mainClass.set("net.raphimc.javadowngrader.standalone.Main")
+}
+
 tasks.jar {
     dependsOn(include)
     from({
@@ -43,7 +48,7 @@ tasks.jar {
     })
 
     manifest {
-        attributes["Main-Class"] = "net.raphimc.javadowngrader.standalone.Main"
+        attributes["Main-Class"] = application.mainClass.get()
         attributes["Multi-Release"] = true
     }
 }
