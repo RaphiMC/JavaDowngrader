@@ -156,6 +156,7 @@ public class Main {
             libraryPath = stream.collect(Collectors.toList());
         }
 
+        LOGGER.info("Opening source JAR");
         try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
             final Path inRoot = inFs.getRootDirectories().iterator().next();
             final TransformerManager transformerManager = new TransformerManager(
@@ -187,8 +188,8 @@ public class Main {
                     }
                 }
                 final int threadCount = Runtime.getRuntime().availableProcessors();
-                final ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
                 LOGGER.info("Downgrading classes with {} threads", threadCount);
+                final ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
                 final List<Callable<Void>> tasks;
                 try (Stream<Path> stream = Files.walk(inRoot)) {
                     tasks = stream.map(path -> (Callable<Void>) () -> {
