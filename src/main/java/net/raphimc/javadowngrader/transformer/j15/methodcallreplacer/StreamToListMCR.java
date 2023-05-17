@@ -27,10 +27,15 @@ public class StreamToListMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
+        // Stream
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/stream/Collectors", "toList", "()Ljava/util/stream/Collector;"));
+        // Stream Collector
         replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/stream/Stream", "collect", "(Ljava/util/stream/Collector;)Ljava/lang/Object;"));
+        // Object
         replacement.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/util/List"));
+        // List
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableList", "(Ljava/util/List;)Ljava/util/List;"));
+        // List
 
         return replacement;
     }

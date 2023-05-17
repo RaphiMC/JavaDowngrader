@@ -27,11 +27,17 @@ public class MapCopyOfMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
+        // Map
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/HashMap"));
+        // Map HashMap?
         replacement.add(new InsnNode(Opcodes.DUP_X1));
+        // HashMap? Map HashMap?
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // HashMap? HashMap? Map
         replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/HashMap", "<init>", "(Ljava/util/Map;)V"));
+        // HashMap
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableMap", "(Ljava/util/Map;)Ljava/util/Map;"));
+        // Map
 
         return replacement;
     }

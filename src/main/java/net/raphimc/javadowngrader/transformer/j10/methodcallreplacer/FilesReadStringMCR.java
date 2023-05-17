@@ -28,21 +28,34 @@ public class FilesReadStringMCR implements MethodCallReplacer {
         final InsnList replacement = new InsnList();
 
         if (originalDesc.equals("(Ljava/nio/file/Path;)Ljava/lang/String;")) {
+            // Path
             replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/nio/file/Files", "readAllBytes", "(Ljava/nio/file/Path;)[B"));
+            // byte[]
             replacement.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/nio/charset/StandardCharsets", "UTF_8", "Ljava/nio/charset/Charset;"));
+            // byte[] Charset
         } else if (originalDesc.equals("(Ljava/nio/file/Path;Ljava/nio/charset/Charset;)Ljava/lang/String;")) {
+            // Path Charset
             replacement.add(new InsnNode(Opcodes.SWAP));
+            // Charset Path
             replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/nio/file/Files", "readAllBytes", "(Ljava/nio/file/Path;)[B"));
+            // Charset byte[]
             replacement.add(new InsnNode(Opcodes.SWAP));
+            // byte[] Charset
         } else {
             throw new RuntimeException("Unsupported method descriptor: " + originalDesc);
         }
 
+        // byte[] Charset
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/lang/String"));
+        // byte[] Charset String?
         replacement.add(new InsnNode(Opcodes.DUP_X2));
+        // String? byte[] Charset String?
         replacement.add(new InsnNode(Opcodes.DUP_X2));
+        // String? String? byte[] Charset String?
         replacement.add(new InsnNode(Opcodes.POP));
+        // String? String? byte[] Charset
         replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([BLjava/nio/charset/Charset;)V"));
+        // String
 
         return replacement;
     }

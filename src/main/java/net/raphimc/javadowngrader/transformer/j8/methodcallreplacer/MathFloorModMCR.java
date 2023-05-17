@@ -27,9 +27,13 @@ public class MathFloorModMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
+        // long1 long2 int
         replacement.add(new InsnNode(Opcodes.I2L));
+        // long1 long2 long1 long2
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Math", "floorMod", "(JJ)J"));
+        // long1 long2
         replacement.add(new InsnNode(Opcodes.L2I));
+        // int
 
         return replacement;
     }

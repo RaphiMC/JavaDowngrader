@@ -28,19 +28,29 @@ public class MatcherAppendTailMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
-        final int stringBufferIndex = ASMUtil.getFreeVarIndex(methodNode);
-        replacement.add(new TypeInsnNode(Opcodes.NEW, "java/lang/StringBuffer"));
-        replacement.add(new InsnNode(Opcodes.DUP));
-        replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "()V"));
-        replacement.add(new VarInsnNode(Opcodes.ASTORE, stringBufferIndex));
+        final int stringBufferIndex = ASMUtil.getFreeVarIndex(methodNode); // StringBuffer
 
+        // Matcher StringBuilder
+        replacement.add(new TypeInsnNode(Opcodes.NEW, "java/lang/StringBuffer"));
+        // Matcher StringBuilder StringBuffer?
+        replacement.add(new InsnNode(Opcodes.DUP));
+        // Matcher StringBuilder StringBuffer? StringBuffer?
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "()V"));
+        // Matcher StringBuilder StringBuffer
+        replacement.add(new VarInsnNode(Opcodes.ASTORE, stringBufferIndex));
+        // Matcher StringBuilder
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // StringBuilder Matcher
         replacement.add(new VarInsnNode(Opcodes.ALOAD, stringBufferIndex));
+        // StringBuilder Matcher StringBuffer
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/regex/Matcher", "appendTail", "(Ljava/lang/StringBuffer;)Ljava/lang/StringBuffer;"));
-        replacement.add(new InsnNode(Opcodes.SWAP));
-        replacement.add(new VarInsnNode(Opcodes.ALOAD, stringBufferIndex));
-        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/StringBuffer;)Ljava/lang/StringBuilder;"));
+        // StringBuilder StringBuffer
         replacement.add(new InsnNode(Opcodes.POP));
+        // StringBuilder
+        replacement.add(new VarInsnNode(Opcodes.ALOAD, stringBufferIndex));
+        // StringBuilder StringBuffer
+        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/StringBuffer;)Ljava/lang/StringBuilder;"));
+        // StringBuilder
 
         return replacement;
     }

@@ -27,10 +27,15 @@ public class ListToArrayMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
+        // List IntFunction
         replacement.add(new InsnNode(Opcodes.ICONST_0));
+        // List IntFunction int
         replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/function/IntFunction", "apply", "(I)Ljava/lang/Object;"));
+        // List Object
         replacement.add(new TypeInsnNode(Opcodes.CHECKCAST, "[Ljava/lang/Object;"));
+        // List Object[]
         replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/List", "toArray", "([Ljava/lang/Object;)[Ljava/lang/Object;"));
+        // Object[]
 
         return replacement;
     }

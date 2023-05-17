@@ -27,11 +27,17 @@ public class ListCopyOfMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
+        // Collection
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/ArrayList"));
+        // Collection ArrayList?
         replacement.add(new InsnNode(Opcodes.DUP_X1));
+        // ArrayList? Collection ArrayList?
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // ArrayList? ArrayList? Collection
         replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/ArrayList", "<init>", "(Ljava/util/Collection;)V"));
+        // ArrayList
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableList", "(Ljava/util/List;)Ljava/util/List;"));
+        // List
 
         return replacement;
     }

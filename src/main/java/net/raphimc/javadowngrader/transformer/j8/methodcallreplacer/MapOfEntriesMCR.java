@@ -28,44 +28,65 @@ public class MapOfEntriesMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
-        final int mapVarIndex = ASMUtil.getFreeVarIndex(methodNode);
-        final int arrayVarIndex = ASMUtil.getFreeVarIndex(methodNode) + 1;
-        final int loopVarIndex = ASMUtil.getFreeVarIndex(methodNode) + 2;
+        final int mapVarIndex = ASMUtil.getFreeVarIndex(methodNode); // HashMap
+        final int arrayVarIndex = ASMUtil.getFreeVarIndex(methodNode) + 1; // Map.Entry[]
+        final int loopVarIndex = ASMUtil.getFreeVarIndex(methodNode) + 2; // int
         final LabelNode loopStart = new LabelNode();
         final LabelNode loopEnd = new LabelNode();
 
+        // Map.Entry[]
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/HashMap"));
+        // Map.Entry[] HashMap?
         replacement.add(new InsnNode(Opcodes.DUP));
+        // Map.Entry[] HashMap? HashMap?
         replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/HashMap", "<init>", "()V"));
+        // Map.Entry[] HashMap
         replacement.add(new VarInsnNode(Opcodes.ASTORE, mapVarIndex));
-
+        // Map.Entry[]
         replacement.add(new VarInsnNode(Opcodes.ASTORE, arrayVarIndex));
+        //
         replacement.add(new InsnNode(Opcodes.ICONST_0));
+        // int
         replacement.add(new VarInsnNode(Opcodes.ISTORE, loopVarIndex));
-
+        //
         replacement.add(loopStart);
+        //
         replacement.add(new VarInsnNode(Opcodes.ALOAD, arrayVarIndex));
+        // Map.Entry[]
         replacement.add(new InsnNode(Opcodes.ARRAYLENGTH));
+        // int
         replacement.add(new VarInsnNode(Opcodes.ILOAD, loopVarIndex));
+        // int int
         replacement.add(new JumpInsnNode(Opcodes.IF_ICMPLE, loopEnd));
-
+        //
         replacement.add(new VarInsnNode(Opcodes.ALOAD, mapVarIndex));
+        // HashMap
         replacement.add(new VarInsnNode(Opcodes.ALOAD, arrayVarIndex));
+        // HashMap Map.Entry[]
         replacement.add(new VarInsnNode(Opcodes.ILOAD, loopVarIndex));
+        // HashMap Map.Entry[] int
         replacement.add(new InsnNode(Opcodes.AALOAD));
+        // HashMap Map.Entry
         replacement.add(new InsnNode(Opcodes.DUP));
-
+        // HashMap Map.Entry Map.Entry
         replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/Map$Entry", "getKey", "()Ljava/lang/Object;"));
+        // HashMap Map.Entry Object
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // HashMap Object Map.Entry
         replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/Map$Entry", "getValue", "()Ljava/lang/Object;"));
+        // HashMap Object Object
         replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"));
+        // HashMap
         replacement.add(new InsnNode(Opcodes.POP));
-
+        //
         replacement.add(new IincInsnNode(loopVarIndex, 1));
+        //
         replacement.add(new JumpInsnNode(Opcodes.GOTO, loopStart));
 
         replacement.add(loopEnd);
+        //
         replacement.add(new VarInsnNode(Opcodes.ALOAD, mapVarIndex));
+        // HashMap
 
         return replacement;
     }

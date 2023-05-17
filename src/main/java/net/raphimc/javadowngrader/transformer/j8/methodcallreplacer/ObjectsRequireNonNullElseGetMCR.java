@@ -30,20 +30,35 @@ public class ObjectsRequireNonNullElseGetMCR implements MethodCallReplacer {
         final LabelNode elseJump = new LabelNode();
         final LabelNode endJump = new LabelNode();
 
+        // Object Supplier
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // Supplier Object
         replacement.add(new InsnNode(Opcodes.DUP));
+        // Supplier Object Object
         replacement.add(new JumpInsnNode(Opcodes.IFNULL, elseJump));
+        // Supplier Object
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // Object Supplier
         replacement.add(new InsnNode(Opcodes.POP));
+        // Object
         replacement.add(new JumpInsnNode(Opcodes.GOTO, endJump));
+
         replacement.add(elseJump);
+        // Supplier Object
         replacement.add(new InsnNode(Opcodes.POP));
+        // Supplier
         replacement.add(new LdcInsnNode("supplier"));
+        // Supplier String
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNull", "(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;"));
+        // Object
         replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/function/Supplier", "get", "()Ljava/lang/Object;"));
+        // Object
         replacement.add(new LdcInsnNode("supplier.get()"));
+        // Object String
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNull", "(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;"));
+        // Object
         replacement.add(endJump);
+        // Object
 
         return replacement;
     }

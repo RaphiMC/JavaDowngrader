@@ -27,15 +27,25 @@ public class MapEntryMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
+        // Object Object
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNull", "(Ljava/lang/Object;)Ljava/lang/Object;"));
+        // Object Object
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // Object Object
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNull", "(Ljava/lang/Object;)Ljava/lang/Object;"));
+        // Object Object
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // Object Object
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/AbstractMap$SimpleImmutableEntry"));
+        // Object Object AbstractMap.SimpleImmutableEntry?
         replacement.add(new InsnNode(Opcodes.DUP_X2));
+        // AbstractMap.SimpleImmutableEntry? Object Object AbstractMap.SimpleImmutableEntry?
         replacement.add(new InsnNode(Opcodes.DUP_X2));
+        // AbstractMap.SimpleImmutableEntry? AbstractMap.SimpleImmutableEntry? Object Object AbstractMap.SimpleImmutableEntry?
         replacement.add(new InsnNode(Opcodes.POP));
+        // AbstractMap.SimpleImmutableEntry? AbstractMap.SimpleImmutableEntry? Object Object
         replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/AbstractMap$SimpleImmutableEntry", "<init>", "(Ljava/lang/Object;Ljava/lang/Object;)V"));
+        // AbstractMap.SimpleImmutableEntry
 
         return replacement;
     }

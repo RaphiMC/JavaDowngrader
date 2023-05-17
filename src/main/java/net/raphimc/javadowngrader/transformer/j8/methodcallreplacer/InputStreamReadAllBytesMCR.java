@@ -33,13 +33,21 @@ public class InputStreamReadAllBytesMCR implements MethodCallReplacer {
 
         final InsnList replacement = new InsnList();
 
+        // InputStream
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/io/ByteArrayOutputStream"));
+        // InputStream ByteArrayOutputStream?
         replacement.add(new InsnNode(Opcodes.DUP));
+        // InputStream ByteArrayOutputStream? ByteArrayOutputStream?
         replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/io/ByteArrayOutputStream", "<init>", "()V"));
+        // InputStream ByteArrayOutputStream
         replacement.add(new InsnNode(Opcodes.DUP_X1));
+        // ByteArrayOutputStream InputStream ByteArrayOutputStream
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, classNode.name, TRANSFERTO_NAME, TRANSFERTO_DESC));
+        // ByteArrayOutputStream long1 long2
         replacement.add(new InsnNode(Opcodes.POP2));
+        // ByteArrayOutputStream
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/io/ByteArrayOutputStream", "toByteArray", "()[B"));
+        // byte[]
 
         return replacement;
     }

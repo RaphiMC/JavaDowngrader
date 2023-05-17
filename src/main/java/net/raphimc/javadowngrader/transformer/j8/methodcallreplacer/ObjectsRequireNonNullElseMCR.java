@@ -30,17 +30,29 @@ public class ObjectsRequireNonNullElseMCR implements MethodCallReplacer {
         final LabelNode elseJump = new LabelNode();
         final LabelNode endJump = new LabelNode();
 
+        // Object Object
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // Object Object
         replacement.add(new InsnNode(Opcodes.DUP));
+        // Object Object Object
         replacement.add(new JumpInsnNode(Opcodes.IFNULL, elseJump));
+        // Object Object
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // Object Object
         replacement.add(new InsnNode(Opcodes.POP));
+        // Object
         replacement.add(new JumpInsnNode(Opcodes.GOTO, endJump));
+
         replacement.add(elseJump);
+        // Object Object
         replacement.add(new InsnNode(Opcodes.POP));
+        // Object
         replacement.add(new LdcInsnNode("defaultObj"));
+        // Object String
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNull", "(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;"));
+        // Object
         replacement.add(endJump);
+        // Object
 
         return replacement;
     }

@@ -40,9 +40,9 @@ public class OptionalOrElseThrowMCR implements MethodCallReplacer {
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/NoSuchElementException"));
         // Optional NoSuchElementException
         replacement.add(new InsnNode(Opcodes.DUP));
-        // Optional NoSuchElementException NoSuchElementException
+        // Optional NoSuchElementException? NoSuchElementException?
         replacement.add(new LdcInsnNode("No value present"));
-        // Optional NoSuchElementException NoSuchElementException String
+        // Optional NoSuchElementException? NoSuchElementException? String
         replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/NoSuchElementException", "<init>", "(Ljava/lang/String;)V"));
         // Optional NoSuchElementException
         replacement.add(new InsnNode(Opcodes.ATHROW));
