@@ -30,19 +30,31 @@ public class OptionalOrMCR implements MethodCallReplacer {
         final LabelNode ifPresentLabel = new LabelNode();
         final LabelNode endLabel = new LabelNode();
 
+        // Optional Supplier
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // Supplier Optional
         replacement.add(new InsnNode(Opcodes.DUP_X1));
+        // Optional Supplier Optional
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "isPresent", "()Z"));
+        // Optional Supplier boolean
         replacement.add(new JumpInsnNode(Opcodes.IFEQ, ifPresentLabel));
+        // Optional Supplier
         replacement.add(new InsnNode(Opcodes.POP));
+        // Optional
         replacement.add(new JumpInsnNode(Opcodes.GOTO, endLabel));
+
         replacement.add(ifPresentLabel);
+        // Optional Supplier
         replacement.add(new InsnNode(Opcodes.SWAP));
+        // Supplier Optional
         replacement.add(new InsnNode(Opcodes.POP));
-        replacement.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/util/function/Supplier"));
+        // Supplier
         replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/function/Supplier", "get", "()Ljava/lang/Object;"));
+        // Object
         replacement.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/util/Optional"));
+        // Optional
         replacement.add(endLabel);
+        // Optional
 
         return replacement;
     }

@@ -33,15 +33,13 @@ public class OptionalIsEmptyMCR implements MethodCallReplacer {
     public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
-        LabelNode ifNeq = new LabelNode();
-        LabelNode end = new LabelNode();
+        // Optional
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, this.optionalClass, "isPresent", "()Z"));
-        replacement.add(new JumpInsnNode(Opcodes.IFNE, ifNeq));
+        // boolean
         replacement.add(new InsnNode(Opcodes.ICONST_1));
-        replacement.add(new JumpInsnNode(Opcodes.GOTO, end));
-        replacement.add(ifNeq);
-        replacement.add(new InsnNode(Opcodes.ICONST_0));
-        replacement.add(end);
+        // boolean
+        replacement.add(new InsnNode(Opcodes.IXOR));
+        // boolean
 
         return replacement;
     }

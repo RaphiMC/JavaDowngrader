@@ -29,16 +29,29 @@ public class OptionalOrElseThrowMCR implements MethodCallReplacer {
 
         LabelNode ifNeq = new LabelNode();
         LabelNode end = new LabelNode();
+
+        // Optional
         replacement.add(new InsnNode(Opcodes.DUP));
+        // Optional Optional
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "isPresent", "()Z"));
+        // Optional boolean
         replacement.add(new JumpInsnNode(Opcodes.IFNE, ifNeq));
+        // Optional
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/NoSuchElementException"));
+        // Optional NoSuchElementException
         replacement.add(new InsnNode(Opcodes.DUP));
+        // Optional NoSuchElementException NoSuchElementException
         replacement.add(new LdcInsnNode("No value present"));
+        // Optional NoSuchElementException NoSuchElementException String
         replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/NoSuchElementException", "<init>", "(Ljava/lang/String;)V"));
+        // Optional NoSuchElementException
         replacement.add(new InsnNode(Opcodes.ATHROW));
+        //
+
         replacement.add(ifNeq);
+        // Optional
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "get", "()Ljava/lang/Object;"));
+        // Object
         replacement.add(end);
 
         return replacement;
