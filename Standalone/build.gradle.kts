@@ -19,7 +19,7 @@ repositories {
 dependencies {
     include(project(":"))
 
-    include("net.lenni0451.classtransform:core:1.9.0-SNAPSHOT")
+    include("net.lenni0451.classtransform:core:1.9.1")
 
     include("net.sf.jopt-simple:jopt-simple:5.0.4")
 
