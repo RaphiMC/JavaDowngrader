@@ -22,6 +22,14 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 public class OptionalStreamMCR implements MethodCallReplacer {
+    private final String streamType, optionalType, valueDescriptor;
+
+    public OptionalStreamMCR(String baseType, String valueDescriptor) {
+        this.streamType = "java/util/stream/" + baseType + "Stream";
+        this.optionalType = "java/util/Optional" + baseType;
+        this.valueDescriptor = valueDescriptor;
+    }
+
     @Override
     public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
@@ -32,19 +40,19 @@ public class OptionalStreamMCR implements MethodCallReplacer {
         // Optional
         replacement.add(new InsnNode(Opcodes.DUP));
         // Optional Optional
-        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "isPresent", "()Z"));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, optionalType, "isPresent", "()Z"));
         // Optional boolean
         replacement.add(new JumpInsnNode(Opcodes.IFEQ, elseStart));
         // Optional
 
         // Optional
-        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "get", "()Ljava/lang/Object;"));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, optionalType, "get", "()" + valueDescriptor));
         // Object
         replacement.add(new MethodInsnNode(
             Opcodes.INVOKESTATIC,
-            "java/util/stream/Stream",
+            streamType,
             "of",
-            "(Ljava/lang/Object;)Ljava/util/stream/Stream;",
+            '(' + valueDescriptor + ")L" + streamType + ';',
             true
         ));
         // Stream
@@ -56,9 +64,9 @@ public class OptionalStreamMCR implements MethodCallReplacer {
         //
         replacement.add(new MethodInsnNode(
             Opcodes.INVOKESTATIC,
-            "java/util/stream/Stream",
+            streamType,
             "empty",
-            "()Ljava/util/stream/Stream;",
+            "()L" + streamType + ";",
             true
         ));
         // Stream

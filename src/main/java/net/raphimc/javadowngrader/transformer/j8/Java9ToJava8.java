@@ -68,7 +68,10 @@ public class Java9ToJava8 extends DowngradingTransformer {
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "ifPresentOrElse", new OptionalIfPresentOrElseMCR());
 
-        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "stream", new OptionalStreamMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "stream", new OptionalStreamMCR("", "Ljava/lang/Object;"));
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/OptionalInt", "stream", new OptionalStreamMCR("Int", "I"));
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/OptionalLong", "stream", new OptionalStreamMCR("Long", "J"));
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/OptionalDouble", "stream", new OptionalStreamMCR("Double", "D"));
     }
 
     @Override
