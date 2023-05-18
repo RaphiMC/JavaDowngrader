@@ -33,42 +33,112 @@ public class ListOfMCR implements MethodCallReplacer {
         if (args.length != 1 || args[0].getSort() != Type.ARRAY) {
             final int argCount = args.length;
             if (argCount == 0) {
+                //
                 replacement.add(new MethodInsnNode(
                     Opcodes.INVOKESTATIC,
                     "java/util/Collections",
                     "emptyList",
                     "()Ljava/util/List;"
                 ));
+                // List
                 return replacement;
             } else if (argCount == 1) {
+                // Object
                 replacement.add(new MethodInsnNode(
                     Opcodes.INVOKESTATIC,
                     "java/util/Collections",
                     "singletonList",
-                    "(Ljava/lang/Object;)Ljava/util/Set;"
+                    "(Ljava/lang/Object;)Ljava/util/List;"
                 ));
+                // List
                 return replacement;
             }
 
-            final int freeVarIndex = ASMUtil.getFreeVarIndex(methodNode);
+            final int arrayListIndex = ASMUtil.getFreeVarIndex(methodNode); // ArrayList
 
+            // Object...
             replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/ArrayList"));
+            // Object... ArrayList?
             replacement.add(new InsnNode(Opcodes.DUP));
-            replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V"));
-            replacement.add(new VarInsnNode(Opcodes.ASTORE, freeVarIndex));
+            // Object... ArrayList? ArrayList?
+            replacement.add(new IntInsnNode(Opcodes.SIPUSH, argCount));
+            // Object... ArrayList? ArrayList? int
+            replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/ArrayList", "<init>", "(I)V"));
+            // Object... ArrayList
+            replacement.add(new VarInsnNode(Opcodes.ASTORE, arrayListIndex));
+            // Object...
             for (int i = 0; i < argCount; i++) {
-                replacement.add(new VarInsnNode(Opcodes.ALOAD, freeVarIndex));
+                // Object... Object
+                replacement.add(new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "java/util/Objects",
+                    "requireNonNull",
+                    "(Ljava/lang/Object;)Ljava/lang/Object;"
+                ));
+                // Object... Object
+                replacement.add(new VarInsnNode(Opcodes.ALOAD, arrayListIndex));
+                // Object... Object ArrayList
                 replacement.add(new InsnNode(Opcodes.SWAP));
+                // Object... ArrayList Object
                 replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z"));
+                // Object... boolean
                 replacement.add(new InsnNode(Opcodes.POP));
+                // Object...
             }
-            replacement.add(new VarInsnNode(Opcodes.ALOAD, freeVarIndex));
+            //
+            replacement.add(new VarInsnNode(Opcodes.ALOAD, arrayListIndex));
+            // ArrayList
             replacement.add(new InsnNode(Opcodes.DUP));
+            // ArrayList ArrayList
             replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "reverse", "(Ljava/util/List;)V"));
-            replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableList", "(Ljava/util/List;)Ljava/util/List;"));
+            // ArrayList
         } else {
+            final LabelNode forStart = new LabelNode();
+            final LabelNode forEnd = new LabelNode();
+            final int iIndex = ASMUtil.getFreeVarIndex(methodNode); // int
+
+            // Object[]
+            replacement.add(new InsnNode(Opcodes.ICONST_0));
+            // Object[] int
+            replacement.add(new VarInsnNode(Opcodes.ISTORE, iIndex));
+            // Object[]
+            replacement.add(forStart);
+            // Object[]
+            replacement.add(new InsnNode(Opcodes.DUP));
+            // Object[] Object[]
+            replacement.add(new InsnNode(Opcodes.ARRAYLENGTH));
+            // Object[] int
+            replacement.add(new VarInsnNode(Opcodes.ILOAD, iIndex));
+            // Object[] int int
+            replacement.add(new JumpInsnNode(Opcodes.IF_ICMPLE, forEnd));
+            // Object[]
+            replacement.add(new InsnNode(Opcodes.DUP));
+            // Object[] Object[]
+            replacement.add(new VarInsnNode(Opcodes.ILOAD, iIndex));
+            // Object[] Object[] int
+            replacement.add(new IincInsnNode(iIndex, 1));
+            // Object[] Object[]
+            replacement.add(new InsnNode(Opcodes.AALOAD));
+            // Object[] Object
+            replacement.add(new MethodInsnNode(
+                Opcodes.INVOKESTATIC,
+                "java/util/Objects",
+                "requireNonNull",
+                "(Ljava/lang/Object;)Ljava/lang/Object;"
+            ));
+            // Object[] Object
+            replacement.add(new InsnNode(Opcodes.POP));
+            // Object[]
+            replacement.add(new JumpInsnNode(Opcodes.GOTO, forStart));
+
+            replacement.add(forEnd);
+            // Object[]
             replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Arrays", "asList", "([Ljava/lang/Object;)Ljava/util/List;"));
+            // List
         }
+        // List
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableList", "(Ljava/util/List;)Ljava/util/List;"));
+        // List
 
         return replacement;
     }
