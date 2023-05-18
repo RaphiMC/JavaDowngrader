@@ -18,6 +18,7 @@
 package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
 
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
+import net.raphimc.javadowngrader.util.ASMUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -90,45 +91,66 @@ public class ListOfMCR implements MethodCallReplacer {
         } else {
             final LabelNode forStart = new LabelNode();
             final LabelNode forEnd = new LabelNode();
+            final int resultIndex = ASMUtil.getFreeVarIndex(methodNode);
 
-            // Object[]
-            replacement.add(new InsnNode(Opcodes.ICONST_0));
-            // Object[] int(i)
-            replacement.add(forStart);
-            // Object[] int(i)
-            replacement.add(new InsnNode(Opcodes.DUP_X1));
-            // int(i) Object[] int(i)
-            replacement.add(new InsnNode(Opcodes.SWAP));
-            // int(i) int(i) Object[]
-            replacement.add(new InsnNode(Opcodes.DUP_X2));
-            // Object[] int(i) int(i) Object[]
+            // Object[](input)
+            replacement.add(new InsnNode(Opcodes.DUP));
+            // Object[](input) Object[](input)
             replacement.add(new InsnNode(Opcodes.ARRAYLENGTH));
-            // Object[] int(i) int(i) int(length)
+            // Object[](input) int(length)
+            replacement.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/Object"));
+            // Object[](input) Object[](result)
+            replacement.add(new VarInsnNode(Opcodes.ASTORE, resultIndex));
+            // Object[](input)
+            replacement.add(new InsnNode(Opcodes.ICONST_0));
+            // Object[](input) int(i)
+            replacement.add(forStart);
+            // Object[](input) int(i)
+            replacement.add(new InsnNode(Opcodes.DUP_X1));
+            // int(i) Object[](input) int(i)
+            replacement.add(new InsnNode(Opcodes.SWAP));
+            // int(i) int(i) Object[](input)
+            replacement.add(new InsnNode(Opcodes.DUP_X2));
+            // Object[](input) int(i) int(i) Object[](input)
+            replacement.add(new InsnNode(Opcodes.ARRAYLENGTH));
+            // Object[](input) int(i) int(i) int(length)
             replacement.add(new JumpInsnNode(Opcodes.IF_ICMPGE, forEnd));
-            // Object[] int(i)
+            // Object[](input) int(i)
             replacement.add(new InsnNode(Opcodes.DUP2));
-            // Object[] int(i) Object[] int(i)
+            // Object[](input) int(i) Object[](input) int(i)
             replacement.add(new InsnNode(Opcodes.AALOAD));
-            // Object[] int(i) Object
+            // Object[](input) int(i) Object
             replacement.add(new MethodInsnNode(
                 Opcodes.INVOKESTATIC,
                 "java/util/Objects",
                 "requireNonNull",
                 "(Ljava/lang/Object;)Ljava/lang/Object;"
             ));
-            // Object[] int(i) Object
+            // Object[](input) int(i) Object
+            replacement.add(new InsnNode(Opcodes.DUP2));
+            // Object[](input) int(i) Object int(i) Object
+            replacement.add(new VarInsnNode(Opcodes.ALOAD, resultIndex));
+            // Object[](input) int(i) Object int(i) Object Object[](result)
+            replacement.add(new InsnNode(Opcodes.DUP_X2));
+            // Object[](input) int(i) Object Object[](result) int(i) Object Object[](result)
             replacement.add(new InsnNode(Opcodes.POP));
-            // Object[] int(i)
+            // Object[](input) int(i) Object Object[](result) int(i) Object
+            replacement.add(new InsnNode(Opcodes.AASTORE));
+            // Object[](input) int(i) Object
+            replacement.add(new InsnNode(Opcodes.POP));
+            // Object[](input) int(i)
             replacement.add(new InsnNode(Opcodes.ICONST_1));
-            // Object[] int(i) int
+            // Object[](input) int(i) int
             replacement.add(new InsnNode(Opcodes.IADD));
-            // Object[] int(i)
+            // Object[](input) int(i)
             replacement.add(new JumpInsnNode(Opcodes.GOTO, forStart));
 
             replacement.add(forEnd);
-            // Object[] int(i)
-            replacement.add(new InsnNode(Opcodes.POP));
-            // Object[]
+            // Object[](input) int(i)
+            replacement.add(new InsnNode(Opcodes.POP2));
+            //
+            replacement.add(new VarInsnNode(Opcodes.ALOAD, resultIndex));
+            // Object[](result)
             replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Arrays", "asList", "([Ljava/lang/Object;)Ljava/util/List;"));
             // List
         }
