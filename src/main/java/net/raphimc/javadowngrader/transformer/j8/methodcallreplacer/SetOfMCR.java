@@ -31,9 +31,27 @@ public class SetOfMCR implements MethodCallReplacer {
 
         final Type[] args = Type.getArgumentTypes(originalDesc);
         if (args.length != 1 || args[0].getSort() != Type.ARRAY) {
+            final int argCount = args.length;
+            if (argCount == 0) {
+                replacement.add(new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "java/util/Collections",
+                    "emptySet",
+                    "()Ljava/util/Set;"
+                ));
+                return replacement;
+            } else if (argCount == 1) {
+                replacement.add(new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "java/util/Collections",
+                    "singleton",
+                    "(Ljava/lang/Object;)Ljava/util/Set;"
+                ));
+                return replacement;
+            }
+
             final int freeVarIndex = ASMUtil.getFreeVarIndex(methodNode);
 
-            final int argCount = args.length;
             replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/HashSet"));
             replacement.add(new InsnNode(Opcodes.DUP));
             replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/HashSet", "<init>", "()V"));

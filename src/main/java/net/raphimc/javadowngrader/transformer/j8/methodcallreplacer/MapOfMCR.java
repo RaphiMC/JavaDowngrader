@@ -30,12 +30,30 @@ public class MapOfMCR implements MethodCallReplacer {
         final InsnList replacement = new InsnList();
 
         final Type[] args = Type.getArgumentTypes(originalDesc);
-        final int freeVarIndex = ASMUtil.getFreeVarIndex(methodNode);
 
         final int argCount = args.length;
         if (argCount % 2 != 0) {
             throw new RuntimeException("Map.of() requires an even number of arguments");
         }
+
+        if (argCount == 0) {
+            replacement.add(new MethodInsnNode(
+                Opcodes.INVOKESTATIC,
+                "java/util/Collections",
+                "emptyMap",
+                "()Ljava/util/Map;"
+            ));
+            return replacement;
+        } else if (argCount == 2) {
+            replacement.add(new MethodInsnNode(
+                Opcodes.INVOKESTATIC,
+                "java/util/Collections",
+                "singletonMap",
+                "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/Map;"
+            ));
+            return replacement;
+        }
+        final int freeVarIndex = ASMUtil.getFreeVarIndex(methodNode);
 
         replacement.add(new TypeInsnNode(Opcodes.NEW, "java/util/HashMap"));
         replacement.add(new InsnNode(Opcodes.DUP));
