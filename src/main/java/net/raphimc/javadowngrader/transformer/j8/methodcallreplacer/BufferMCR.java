@@ -35,7 +35,7 @@ public class BufferMCR implements MethodCallReplacer {
         final String newDesc = Type.getMethodDescriptor(Type.getObjectType("java/nio/Buffer"), Type.getArgumentTypes(originalDesc));
 
         final InsnList replacement = new InsnList();
-        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, this.bufferClass, originalName, newDesc));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/nio/Buffer", originalName, newDesc));
         replacement.add(new TypeInsnNode(Opcodes.CHECKCAST, this.bufferClass));
         return replacement;
     }

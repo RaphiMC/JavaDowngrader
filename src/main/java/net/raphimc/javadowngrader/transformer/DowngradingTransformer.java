@@ -74,6 +74,8 @@ public abstract class DowngradingTransformer {
 
         this.preTransform(classNode);
 
+        int bridge = 100;
+
         if (!this.methodCallReplacers.isEmpty()) {
             for (MethodNode methodNode : new ArrayList<>(classNode.methods)) {
                 for (AbstractInsnNode insn : methodNode.instructions.toArray()) {
@@ -105,7 +107,7 @@ public abstract class DowngradingTransformer {
                                     final String desc = handle.getTag() == Opcodes.H_INVOKESTATIC || handle.getTag() == Opcodes.H_GETSTATIC || handle.getTag() == Opcodes.H_PUTSTATIC
                                         ? handle.getDesc()
                                         : "(L" + handle.getOwner() + ';' + handle.getDesc().substring(1);
-                                    final MethodNode bridgeMethod = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC, "javadowngrader-bridge$" + System.nanoTime(), desc, null, null);
+                                    final MethodNode bridgeMethod = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC, "javadowngrader-bridge$" + (bridge++), desc, null, null);
                                     final Type[] argumentTypes = Type.getArgumentTypes(desc);
                                     for (int i1 = 0; i1 < argumentTypes.length; i1++) {
                                         bridgeMethod.instructions.add(new VarInsnNode(argumentTypes[i1].getOpcode(Opcodes.ILOAD), i1));
