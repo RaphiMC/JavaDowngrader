@@ -18,12 +18,23 @@
 package net.raphimc.javadowngrader.transformer.j16;
 
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
+import net.raphimc.javadowngrader.transformer.j16.methodcallreplacer.RandomGeneratorNextLongMCR;
 import org.objectweb.asm.Opcodes;
 
 public class Java17ToJava16 extends DowngradingTransformer {
+    public static final String RANDOM_SUPPORT = "net/raphimc/javadowngrader/runtime/jdk/internal/util/random/RandomSupport";
 
     public Java17ToJava16() {
         super(Opcodes.V17, Opcodes.V16);
+
+        final String[] randomClasses = {
+            "java/util/Random",
+            "java/security/SecureRandom",
+            "java/util/concurrent/ThreadLocalRandom"
+        };
+        for (final String clazz : randomClasses) {
+            addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, clazz, "nextLong", "(J)J", new RandomGeneratorNextLongMCR());
+        }
     }
 
 }

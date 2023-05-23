@@ -15,29 +15,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
+package net.raphimc.javadowngrader.transformer.j16.methodcallreplacer;
 
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
-public class BufferMCR implements MethodCallReplacer {
+import static net.raphimc.javadowngrader.transformer.j16.Java17ToJava16.RANDOM_SUPPORT;
 
-    private final String bufferClass;
-
-    public BufferMCR(final String bufferClass) {
-        this.bufferClass = bufferClass;
-    }
-
+public class RandomGeneratorNextLongMCR implements MethodCallReplacer {
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
-        final String newDesc = Type.getMethodDescriptor(Type.getObjectType("java/nio/Buffer"), Type.getArgumentTypes(originalDesc));
-
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
-        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, bufferClass, originalName, newDesc));
-        replacement.add(new TypeInsnNode(Opcodes.CHECKCAST, this.bufferClass));
+
+        // Random long1 long2
+        replacement.add(new InsnNode(Opcodes.DUP2));
+        // Random long1 long2 long1 long2
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, RANDOM_SUPPORT, "checkBound", "(J)V"));
+        // Random long1 long2
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, RANDOM_SUPPORT, "boundedNextLong", "(Ljava/util/Random;J)J"));
+        // long1 long2
+
         return replacement;
     }
-
 }
