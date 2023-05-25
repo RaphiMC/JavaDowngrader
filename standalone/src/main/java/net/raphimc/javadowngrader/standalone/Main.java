@@ -174,7 +174,9 @@ public class Main {
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
                 final Path outRoot = outFs.getRootDirectories().iterator().next();
                 LOGGER.info("Copying runtime classes");
-                try (CloseableSupplier<Path, IOException> supplier = GeneralUtil.getPath(Main.class.getResource('/' + Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + Constants.JAVADOWNGRADER_RUNTIME_ROOT).toURI())) {
+                try (CloseableSupplier<Path, IOException> supplier = GeneralUtil.getPath(Main.class.getResource(
+                    '/' + Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + Constants.JAVADOWNGRADER_RUNTIME_ROOT
+                ).toURI())) {
                     final Path runtimeRoot = supplier.get().getParent();
                     try (Stream<Path> stream = Files.walk(runtimeRoot)) {
                         stream.filter(Files::isRegularFile)

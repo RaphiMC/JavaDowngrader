@@ -23,7 +23,7 @@ allprojects {
 }
 
 dependencies {
-    api project(":RuntimeDep")
+    api project(":runtime-dep")
 
     api "org.ow2.asm:asm-commons:9.5"
     api "org.slf4j:slf4j-api:2.0.7"

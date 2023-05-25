@@ -7,5 +7,5 @@ pluginManagement {
 
 rootProject.name = "JavaDowngrader"
 
-include(":Standalone")
-include(":RuntimeDep")
+include(":standalone")
+include(":runtime-dep")
