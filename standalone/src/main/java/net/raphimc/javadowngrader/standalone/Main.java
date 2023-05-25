@@ -44,7 +44,10 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -197,12 +200,14 @@ public class Main {
                 LOGGER.info("Downgrading classes with {} threads", threadCount);
                 final ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
                 final List<Callable<Void>> tasks;
+                final ProgressBar[] pb = new ProgressBar[1];
                 try (Stream<Path> stream = Files.walk(inRoot)) {
                     tasks = stream.map(path -> (Callable<Void>) () -> {
                         final String relative = GeneralUtil.slashName(inRoot.relativize(path));
                         final Path inOther = outRoot.resolve(relative);
                         if (Files.isDirectory(path)) {
                             Files.createDirectories(inOther);
+                            pb[0].step();
                             return null;
                         }
                         final Path parent = inOther.getParent();
@@ -211,6 +216,7 @@ public class Main {
                         }
                         if (!relative.endsWith(".class")) {
                             Files.copy(path, inOther);
+                            pb[0].step();
                             return null;
                         }
                         final String className = GeneralUtil.toClassName(relative);
@@ -218,20 +224,26 @@ public class Main {
                         final byte[] result = transformerManager.transform(className, bytecode);
                         Files.write(inOther, result != null ? result : bytecode);
 
+                        pb[0].step();
                         return null;
                     }).collect(Collectors.toList());
                 }
-                final List<Future<Void>> futures = tasks.stream().map(threadPool::submit).collect(Collectors.toList());
-                threadPool.shutdown();
-                for (Future<Void> future : ProgressBar.wrap(futures, new ProgressBarBuilder().setTaskName("Downgrading").setStyle(ProgressBarStyle.ASCII))) {
-                    try {
-                        future.get();
-                    } catch (ExecutionException e) {
-                        throw e.getCause();
+                try {
+                    pb[0] = new ProgressBarBuilder()
+                        .setTaskName("Downgrading")
+                        .setStyle(ProgressBarStyle.ASCII)
+                        .setInitialMax(tasks.size())
+                        .setUpdateIntervalMillis(100)
+                        .build();
+                    threadPool.invokeAll(tasks);
+                } finally {
+                    if (pb[0] != null) {
+                        pb[0].close();
                     }
                 }
-                if (!threadPool.awaitTermination(50, TimeUnit.MILLISECONDS)) {
-                    throw new IllegalStateException("get() calls should have terminated thread pool");
+                threadPool.shutdown();
+                if (!threadPool.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
+                    throw new IllegalStateException("Thread pool didn't shutdown correctly");
                 }
                 LOGGER.info("Writing final JAR");
             }
