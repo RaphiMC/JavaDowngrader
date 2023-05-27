@@ -35,7 +35,10 @@ public class Java9ToJava8 extends DowngradingTransformer {
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Map", "ofEntries", "([Ljava/util/Map$Entry;)Ljava/util/Map;", new MapOfEntriesMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/io/InputStream", "transferTo", "(Ljava/io/OutputStream;)J", new InputStreamTransferToMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/io/ByteArrayInputStream", "transferTo", "(Ljava/io/OutputStream;)J", new InputStreamTransferToMCR());
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/io/InputStream", "readAllBytes", "()[B", new InputStreamReadAllBytesMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/io/FileInputStream", "readAllBytes", "()[B", new InputStreamReadAllBytesMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/io/ByteArrayInputStream", "readAllBytes", "()[B", new InputStreamReadAllBytesMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNullElse", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new ObjectsRequireNonNullElseMCR());
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/util/Objects", "requireNonNullElseGet", "(Ljava/lang/Object;Ljava/util/function/Supplier;)Ljava/lang/Object;", new ObjectsRequireNonNullElseGetMCR());
