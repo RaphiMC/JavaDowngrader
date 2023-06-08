@@ -33,9 +33,7 @@ public class CharSequenceIsEmptyMCR implements MethodCallReplacer {
         // CharSequence
         replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/lang/CharSequence", "length", "()I"));
         // int
-        replacement.add(new InsnNode(Opcodes.ICONST_0));
-        // int, int
-        replacement.add(new JumpInsnNode(Opcodes.IF_ICMPNE, ifNeq));
+        replacement.add(new JumpInsnNode(Opcodes.IFNE, ifNeq));
 
         //
         replacement.add(new InsnNode(Opcodes.ICONST_1));
