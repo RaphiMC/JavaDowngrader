@@ -18,12 +18,16 @@
 package net.raphimc.javadowngrader.transformer.j14;
 
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
+import net.raphimc.javadowngrader.transformer.j14.methodcallreplacer.CharSequenceIsEmptyMCR;
 import org.objectweb.asm.Opcodes;
 
 public class Java15ToJava14 extends DowngradingTransformer {
 
     public Java15ToJava14() {
         super(Opcodes.V15, Opcodes.V14);
+
+        this.addMethodCallReplacer(Opcodes.INVOKEINTERFACE, "java/lang/CharSequence", "isEmpty", "()Z", new CharSequenceIsEmptyMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "isEmpty", "()Z", new CharSequenceIsEmptyMCR());
     }
 
 }
