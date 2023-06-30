@@ -54,3 +54,7 @@ jar {
         )
     }
 }
+
+project.tasks.withType(PublishToMavenRepository).forEach {
+    it.enabled = false
+}
