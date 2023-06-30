@@ -1,14 +1,10 @@
-plugins {
-    id "maven-publish"
-}
-
 allprojects {
     apply plugin: "java-library"
+    apply plugin: "maven-publish"
+    apply plugin: "signing"
 
     java.toolchain.languageVersion = JavaLanguageVersion.of(8)
-    [compileJava, compileTestJava, javadoc].each {
-        it.options.encoding = "UTF-8"
-    }
+    compileJava.options.encoding = compileTestJava.options.encoding = javadoc.options.encoding = "UTF-8"
 
     group = project.maven_group
     archivesBaseName = project.maven_name
@@ -20,6 +16,77 @@ allprojects {
     repositories {
         mavenCentral()
     }
+
+    java {
+        withSourcesJar()
+        withJavadocJar()
+    }
+
+    jar {
+        from("LICENSE") {
+            rename { "${it}_${project.archivesBaseName}" }
+        }
+    }
+
+    artifacts {
+        archives javadocJar, sourcesJar
+    }
+
+    publishing {
+        repositories {
+            maven {
+                name = "reposilite"
+                url = project.maven_version.endsWith("SNAPSHOT") ? "https://maven.lenni0451.net/snapshots" : "https://maven.lenni0451.net/releases"
+
+                credentials(PasswordCredentials)
+                authentication {
+                    basic(BasicAuthentication)
+                }
+            }
+        }
+        publications {
+            maven(MavenPublication) {
+                groupId = project.maven_group
+                artifactId = project.maven_name
+                version = project.maven_version
+
+                from components.java
+
+                pom {
+                    name = "JavaDowngrader"
+                    description = "Standalone program and library which can downgrade Java classes/programs down to Java 8"
+                    url = "https://github.com/RaphiMC/JavaDowngrader"
+                    licenses {
+                        license {
+                            name = "LGPL-3.0 License"
+                            url = "https://github.com/RaphiMC/JavaDowngrader/blob/main/LICENSE"
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = "RK_01"
+                        }
+                    }
+                    scm {
+                        connection = "scm:git:git://github.com/RaphiMC/JavaDowngrader.git"
+                        developerConnection = "scm:git:ssh://github.com/RaphiMC/JavaDowngrader.git"
+                        url = "https://github.com/RaphiMC/JavaDowngrader.git"
+                    }
+                }
+            }
+        }
+    }
+
+    signing {
+        setRequired(false)
+        sign configurations.archives
+        sign publishing.publications.maven
+    }
+
+    project.tasks.withType(PublishToMavenRepository).forEach {
+        it.dependsOn(project.tasks.withType(Sign))
+    }
+
 }
 
 dependencies {
@@ -27,37 +94,4 @@ dependencies {
 
     api "org.ow2.asm:asm-commons:9.5"
     api "org.slf4j:slf4j-api:2.0.7"
-}
-
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
-jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
-    }
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "reposilite"
-            url = project.maven_version.endsWith("SNAPSHOT") ? "https://maven.lenni0451.net/snapshots" : "https://maven.lenni0451.net/releases"
-            credentials(PasswordCredentials)
-            authentication {
-                basic(BasicAuthentication)
-            }
-        }
-    }
-    publications {
-        maven(MavenPublication) {
-            groupId = project.maven_group
-            artifactId = project.maven_name
-            version = project.maven_version
-
-            from components.java
-        }
-    }
 }
