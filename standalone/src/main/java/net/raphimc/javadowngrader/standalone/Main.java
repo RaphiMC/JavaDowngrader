@@ -221,7 +221,12 @@ public class Main {
                         }
                         final String className = GeneralUtil.toClassName(relative);
                         final byte[] bytecode = Files.readAllBytes(path);
-                        final byte[] result = transformerManager.transform(className, bytecode);
+                        byte[] result = null;
+                        try {
+                            result = transformerManager.transform(className, bytecode);
+                        } catch (Exception e) {
+                            LOGGER.error("Failed to transform {}", className, e);
+                        }
                         Files.write(inOther, result != null ? result : bytecode);
 
                         pb[0].step();

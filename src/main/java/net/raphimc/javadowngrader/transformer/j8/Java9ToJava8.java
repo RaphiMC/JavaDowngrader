@@ -75,6 +75,9 @@ public class Java9ToJava8 extends DowngradingTransformer {
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/OptionalInt", "stream", new OptionalStreamMCR("Int", "I"));
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/OptionalLong", "stream", new OptionalStreamMCR("Long", "J"));
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/OptionalDouble", "stream", new OptionalStreamMCR("Double", "D"));
+
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/lang/Runtime", "version", new RuntimeVersionMCR());
+        this.addClassReplacement("java/lang/Runtime$Version");
     }
 
     @Override
