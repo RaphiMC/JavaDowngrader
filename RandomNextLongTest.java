@@ -1,3 +1,5 @@
+import java.util.Random;
+
 /*
  * This file is part of JavaDowngrader - https://github.com/RaphiMC/JavaDowngrader
  * Copyright (C) 2023 RK_01/RaphiMC and contributors
@@ -15,31 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.runtime.jdk.internal.util.random;
-
-import java.util.Random;
-
-public class RandomSupport {
-    public static final String BAD_BOUND = "bound must be positive";
-
-    public static void checkBound(long bound) {
-        if (bound <= 0) {
-            throw new IllegalArgumentException(BAD_BOUND);
-        }
-    }
-
-    public static long boundedNextLong(Random rng, long bound) {
-        final long m = bound - 1;
-        long r = rng.nextLong();
-        if ((bound & m) == 0L) {
-            r &= m;
-        } else {
-            //noinspection StatementWithEmptyBody
-            for (long u = r >>> 1;
-                 u + m - (r = u % bound) < 0L;
-                 u = rng.nextLong() >>> 1)
-                ;
-        }
-        return r;
+public class RandomNextLongTest {
+    public static void main(String[] args) {
+        final Random random = new Random();
+        System.out.println(random.nextLong(25L));
     }
 }

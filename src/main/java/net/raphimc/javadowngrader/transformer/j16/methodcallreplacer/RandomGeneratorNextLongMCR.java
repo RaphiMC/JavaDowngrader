@@ -18,22 +18,30 @@
 package net.raphimc.javadowngrader.transformer.j16.methodcallreplacer;
 
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
+import net.raphimc.javadowngrader.transformer.j16.RandomSupportBoundedNextLongCreator;
+import net.raphimc.javadowngrader.transformer.j16.RandomSupportCheckBoundCreator;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
-import static net.raphimc.javadowngrader.transformer.j16.Java17ToJava16.RANDOM_SUPPORT;
+import static net.raphimc.javadowngrader.transformer.j16.RandomSupportBoundedNextLongCreator.BOUNDEDNEXTLONG_DESC;
+import static net.raphimc.javadowngrader.transformer.j16.RandomSupportBoundedNextLongCreator.BOUNDEDNEXTLONG_NAME;
+import static net.raphimc.javadowngrader.transformer.j16.RandomSupportCheckBoundCreator.CHECKBOUND_DESC;
+import static net.raphimc.javadowngrader.transformer.j16.RandomSupportCheckBoundCreator.CHECKBOUND_NAME;
 
 public class RandomGeneratorNextLongMCR implements MethodCallReplacer {
     @Override
     public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc) {
         final InsnList replacement = new InsnList();
 
+        RandomSupportCheckBoundCreator.ensureHasMethod(classNode);
+        RandomSupportBoundedNextLongCreator.ensureHasMethod(classNode);
+
         // Random long1 long2
         replacement.add(new InsnNode(Opcodes.DUP2));
         // Random long1 long2 long1 long2
-        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, RANDOM_SUPPORT, "checkBound", "(J)V"));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, classNode.name, CHECKBOUND_NAME, CHECKBOUND_DESC));
         // Random long1 long2
-        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, RANDOM_SUPPORT, "boundedNextLong", "(Ljava/util/Random;J)J"));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, classNode.name, BOUNDEDNEXTLONG_NAME, BOUNDEDNEXTLONG_DESC));
         // long1 long2
 
         return replacement;

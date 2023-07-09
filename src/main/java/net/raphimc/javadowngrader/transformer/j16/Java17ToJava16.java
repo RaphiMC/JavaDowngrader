@@ -22,8 +22,6 @@ import net.raphimc.javadowngrader.transformer.j16.methodcallreplacer.RandomGener
 import org.objectweb.asm.Opcodes;
 
 public class Java17ToJava16 extends DowngradingTransformer {
-    public static final String RANDOM_SUPPORT = "net/raphimc/javadowngrader/runtime/jdk/internal/util/random/RandomSupport";
-
     public Java17ToJava16() {
         super(Opcodes.V17, Opcodes.V16);
 
