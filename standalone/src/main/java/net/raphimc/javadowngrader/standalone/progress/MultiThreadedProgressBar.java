@@ -28,7 +28,6 @@ public interface MultiThreadedProgressBar extends AutoCloseable {
     void close();
 
     static MultiThreadedProgressBar create(ProgressBarBuilder bar) {
-        System.out.println("Supports cursor movement: " + TerminalUtils.hasCursorMovementSupport());
         return TerminalUtils.hasCursorMovementSupport()
             ? new ThreadedLineProgressBar(bar)
             : new SimpleProgressBar(bar.build());
