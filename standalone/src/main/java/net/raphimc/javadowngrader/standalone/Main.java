@@ -18,11 +18,11 @@
 package net.raphimc.javadowngrader.standalone;
 
 import joptsimple.*;
-import me.tongfei.progressbar.ProgressBar;
 import me.tongfei.progressbar.ProgressBarBuilder;
 import me.tongfei.progressbar.ProgressBarStyle;
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
+import net.raphimc.javadowngrader.standalone.progress.MultiThreadedProgressBar;
 import net.raphimc.javadowngrader.standalone.transform.JavaDowngraderTransformer;
 import net.raphimc.javadowngrader.standalone.transform.LazyFileClassProvider;
 import net.raphimc.javadowngrader.standalone.transform.PathClassProvider;
@@ -75,6 +75,10 @@ public class Main {
         final OptionSpec<List<File>> libraryPath = parser.acceptsAll(asList("library_path", "library", "l"), "Additional libraries to add to the classpath (required for stack frames)")
                 .withRequiredArg()
                 .withValuesConvertedBy(new PathConverter());
+        final OptionSpec<Integer> threadCount = parser.acceptsAll(asList("thread_count", "threads", "t"), "The number of threads to use for the downgrading")
+            .withRequiredArg()
+            .ofType(Integer.class)
+            .defaultsTo(Math.min(Runtime.getRuntime().availableProcessors(), 255));
 
         final OptionSet options;
         try {
@@ -112,7 +116,12 @@ public class Main {
 
         try {
             final long start = System.nanoTime();
-            doConversion(inputFile, outputFile, options.valueOf(version), GeneralUtil.flatten(options.valuesOf(libraryPath)));
+            doConversion(
+                inputFile, outputFile,
+                options.valueOf(version),
+                GeneralUtil.flatten(options.valuesOf(libraryPath)),
+                Math.min(options.valueOf(threadCount), 255)
+            );
             final long end = System.nanoTime();
             LOGGER.info(
                     "Done in {}.",
@@ -132,7 +141,8 @@ public class Main {
             final File inputFile,
             final File outputFile,
             final JavaVersion targetVersion,
-            List<File> libraryPath
+            List<File> libraryPath,
+            int threadCount
     ) throws Throwable {
         LOGGER.info("Downgrading {} to Java {}", inputFile, targetVersion.getName());
         if (outputFile.isFile() && !outputFile.canWrite()) {
@@ -196,14 +206,14 @@ public class Main {
                             });
                     }
                 }
-                final int threadCount = Runtime.getRuntime().availableProcessors();
-                LOGGER.info("Downgrading classes with {} threads", threadCount);
+                LOGGER.info("Downgrading classes with {} thread(s)", threadCount);
                 final ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
                 final List<Callable<Void>> tasks;
-                final ProgressBar[] pb = new ProgressBar[1];
+                final MultiThreadedProgressBar[] pb = new MultiThreadedProgressBar[1];
                 try (Stream<Path> stream = Files.walk(inRoot)) {
                     tasks = stream.map(path -> (Callable<Void>) () -> {
                         final String relative = GeneralUtil.slashName(inRoot.relativize(path));
+                        pb[0].setThreadTask(relative);
                         final Path inOther = outRoot.resolve(relative);
                         if (Files.isDirectory(path)) {
                             Files.createDirectories(inOther);
@@ -234,12 +244,13 @@ public class Main {
                     }).collect(Collectors.toList());
                 }
                 try {
-                    pb[0] = new ProgressBarBuilder()
-                        .setTaskName("Downgrading")
-                        .setStyle(ProgressBarStyle.ASCII)
-                        .setInitialMax(tasks.size())
-                        .setUpdateIntervalMillis(100)
-                        .build();
+                    pb[0] = MultiThreadedProgressBar.create(
+                        new ProgressBarBuilder()
+                            .setTaskName("Downgrading")
+                            .setStyle(ProgressBarStyle.ASCII)
+                            .setInitialMax(tasks.size())
+                            .setUpdateIntervalMillis(100)
+                    );
                     threadPool.invokeAll(tasks);
                 } finally {
                     if (pb[0] != null) {

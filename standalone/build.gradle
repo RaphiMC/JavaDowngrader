@@ -30,6 +30,8 @@ dependencies {
     compileOnly "org.jetbrains:annotations:24.0.1"
 
     include "me.tongfei:progressbar:0.9.5"
+
+    include("org.jline:jline-terminal-jansi:3.21.0")
 }
 
 application {
