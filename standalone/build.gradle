@@ -31,7 +31,7 @@ dependencies {
 
     include "me.tongfei:progressbar:0.9.5"
 
-    include("org.jline:jline-terminal-jansi:3.21.0")
+    include("org.jline:jline-terminal-jansi:3.23.0")
 }
 
 application {
