@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -33,14 +34,14 @@ public class PathClassProvider extends AbstractClassProvider {
 
     private final Path root;
 
-    public PathClassProvider(Path root, IClassProvider parent) {
+    public PathClassProvider(final Path root, final IClassProvider parent) {
         super(parent);
         this.root = root;
     }
 
     @Override
     public byte[] getClass(String name) {
-        final Path path = root.resolve(GeneralUtil.toClassFilename(name));
+        final Path path = this.root.resolve(GeneralUtil.toClassFilename(name));
         if (Files.exists(path)) {
             try {
                 return Files.readAllBytes(path);
@@ -54,26 +55,33 @@ public class PathClassProvider extends AbstractClassProvider {
 
     @Override
     public Map<String, Supplier<byte[]>> getAllClasses() {
-        try (Stream<Path> stream = Files.walk(root)) {
-            return GeneralUtil.merge(
-                (a, b) -> b,
-                super.getAllClasses(),
-                stream
-                    .filter(Files::isRegularFile)
-                    .filter(f -> f.getFileName().endsWith(".class"))
-                    .collect(Collectors.toMap(
-                        p -> GeneralUtil.toClassName(GeneralUtil.slashName(root.relativize(p))),
-                        p -> () -> {
-                            try {
-                                return Files.readAllBytes(p);
-                            } catch (IOException e) {
-                                throw new UncheckedIOException(e);
-                            }
-                        }
-                    ))
+        try (Stream<Path> stream = Files.walk(this.root)) {
+            return merge(
+                    super.getAllClasses(),
+                    stream
+                            .filter(Files::isRegularFile)
+                            .filter(f -> f.getFileName().endsWith(".class"))
+                            .collect(Collectors.toMap(
+                                    p -> GeneralUtil.toClassName(GeneralUtil.slashName(this.root.relativize(p))),
+                                    p -> () -> {
+                                        try {
+                                            return Files.readAllBytes(p);
+                                        } catch (IOException e) {
+                                            throw new UncheckedIOException(e);
+                                        }
+                                    }
+                            ))
             );
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+
+    @SafeVarargs
+    public static <K, V> Map<K, V> merge(final Map<K, V> map, final Map<K, V>... others) {
+        final Map<K, V> newMap = new HashMap<>(map);
+        for (Map<K, V> other : others) newMap.putAll(other);
+        return newMap;
+    }
+
 }

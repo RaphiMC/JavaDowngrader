@@ -24,25 +24,13 @@ import java.net.URI;
 import java.nio.file.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GeneralUtil {
     public static <T> List<T> flatten(List<List<T>> list) {
         return list.stream()
             .flatMap(List::stream)
             .collect(Collectors.toList());
-    }
-
-    @SafeVarargs
-    public static <K, V> Map<K, V> merge(BinaryOperator<V> merger, Map<K, V>... maps) {
-        return Stream.of(maps)
-            .map(Map::entrySet)
-            .flatMap(Set::stream)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, merger));
     }
 
     public static String toClassFilename(String className) {

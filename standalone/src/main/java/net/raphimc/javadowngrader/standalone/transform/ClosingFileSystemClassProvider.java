@@ -22,16 +22,15 @@ import net.lenni0451.classtransform.utils.tree.IClassProvider;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 
-public class ClosingFileSystemClassProvider extends PathClassProvider implements AutoCloseable {
-    private final FileSystem fs;
+public class ClosingFileSystemClassProvider extends FileSystemClassProvider implements AutoCloseable {
 
-    public ClosingFileSystemClassProvider(FileSystem fs, IClassProvider parent) {
-        super(fs.getRootDirectories().iterator().next(), parent);
-        this.fs = fs;
+    public ClosingFileSystemClassProvider(final FileSystem fs, final IClassProvider parent) {
+        super(fs, parent);
     }
 
     @Override
     public void close() throws IOException {
-        fs.close();
+        this.fs.close();
     }
+
 }

@@ -20,53 +20,69 @@ package net.raphimc.javadowngrader.standalone.transform;
 import net.lenni0451.classtransform.utils.tree.IClassProvider;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystems;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 public class LazyFileClassProvider extends AbstractClassProvider implements AutoCloseable {
+
     private final Object[] path;
 
-    public LazyFileClassProvider(List<File> path, IClassProvider parent) {
+    public LazyFileClassProvider(final Collection<File> path, final IClassProvider parent) {
         super(parent);
+
         this.path = path.toArray();
     }
 
     @Override
     public byte[] getClass(String name) {
-        for (int i = 0; i < path.length; i++) {
-            Object element = path[i];
+        for (int i = 0; i < this.path.length; i++) {
+            Object element = this.path[i];
             if (element instanceof File) {
-                synchronized (path) {
-                    if ((element = path[i]) instanceof File) {
-                        path[i] = element = open((File)element);
+                synchronized (this.path) {
+                    if ((element = this.path[i]) instanceof File) {
+                        this.path[i] = element = open((File) element);
                     }
                 }
             }
             try {
-                return ((PathClassProvider)element).getClass(name);
+                return ((PathClassProvider) element).getClass(name);
             } catch (NoSuchElementException ignored) {
             }
         }
         return super.getClass(name);
     }
 
-    private static PathClassProvider open(File file) {
+    private static PathClassProvider open(final File file) {
+        final URI uri;
         try {
-            return new ClosingFileSystemClassProvider(FileSystems.newFileSystem(new URI("jar:" + file.toURI()), Collections.emptyMap()), null);
-        } catch (Exception e) {
-            throw e instanceof RuntimeException ? (RuntimeException)e : new RuntimeException(e);
+            uri = new URI("jar:" + file.toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            return new ClosingFileSystemClassProvider(FileSystems.newFileSystem(uri, Collections.emptyMap()), null);
+        } catch (FileSystemAlreadyExistsException e) {
+            return new FileSystemClassProvider(FileSystems.getFileSystem(uri), null);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
     @Override
     public void close() throws Exception {
-        for (final Object element : path) {
+        for (Object element : this.path) {
             if (element instanceof AutoCloseable) {
-                ((AutoCloseable)element).close();
+                ((AutoCloseable) element).close();
             }
         }
     }
+
 }

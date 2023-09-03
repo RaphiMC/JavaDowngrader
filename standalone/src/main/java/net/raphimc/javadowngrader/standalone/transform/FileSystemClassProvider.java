@@ -19,37 +19,16 @@ package net.raphimc.javadowngrader.standalone.transform;
 
 import net.lenni0451.classtransform.utils.tree.IClassProvider;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.function.Supplier;
+import java.nio.file.FileSystem;
 
-public abstract class AbstractClassProvider implements IClassProvider {
+public class FileSystemClassProvider extends PathClassProvider {
 
-    private final IClassProvider parent;
+    protected final FileSystem fs;
 
-    protected AbstractClassProvider(final IClassProvider parent) {
-        this.parent = parent;
-    }
+    public FileSystemClassProvider(final FileSystem fs, final IClassProvider parent) {
+        super(fs.getRootDirectories().iterator().next(), parent);
 
-    @Override
-    public byte[] getClass(String name) {
-        if (this.parent == null) {
-            throw new NoSuchElementException("Unable to find class '" + name + "'");
-        }
-        return this.parent.getClass(name);
-    }
-
-    @Override
-    public Map<String, Supplier<byte[]>> getAllClasses() {
-        if (this.parent == null) {
-            return Collections.emptyMap();
-        }
-        return this.parent.getAllClasses();
-    }
-
-    public IClassProvider getParent() {
-        return this.parent;
+        this.fs = fs;
     }
 
 }
