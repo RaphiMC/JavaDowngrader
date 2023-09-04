@@ -15,10 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.transform;
+package net.raphimc.javadowngrader.impl.classtransform.classprovider;
 
 import net.lenni0451.classtransform.utils.tree.IClassProvider;
-import net.raphimc.javadowngrader.standalone.util.GeneralUtil;
+import net.raphimc.javadowngrader.impl.classtransform.util.ClassNameUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -41,7 +41,7 @@ public class PathClassProvider extends AbstractClassProvider {
 
     @Override
     public byte[] getClass(String name) {
-        final Path path = this.root.resolve(GeneralUtil.toClassFilename(name));
+        final Path path = this.root.resolve(ClassNameUtil.toClassFilename(name));
         if (Files.exists(path)) {
             try {
                 return Files.readAllBytes(path);
@@ -62,7 +62,7 @@ public class PathClassProvider extends AbstractClassProvider {
                             .filter(Files::isRegularFile)
                             .filter(f -> f.getFileName().endsWith(".class"))
                             .collect(Collectors.toMap(
-                                    p -> GeneralUtil.toClassName(GeneralUtil.slashName(this.root.relativize(p))),
+                                    p -> ClassNameUtil.toClassName(ClassNameUtil.slashName(this.root.relativize(p))),
                                     p -> () -> {
                                         try {
                                             return Files.readAllBytes(p);
@@ -78,7 +78,7 @@ public class PathClassProvider extends AbstractClassProvider {
     }
 
     @SafeVarargs
-    public static <K, V> Map<K, V> merge(final Map<K, V> map, final Map<K, V>... others) {
+    private static <K, V> Map<K, V> merge(final Map<K, V> map, final Map<K, V>... others) {
         final Map<K, V> newMap = new HashMap<>(map);
         for (Map<K, V> other : others) newMap.putAll(other);
         return newMap;

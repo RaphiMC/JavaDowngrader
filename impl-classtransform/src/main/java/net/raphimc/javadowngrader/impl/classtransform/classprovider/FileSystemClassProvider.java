@@ -15,17 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.util;
+package net.raphimc.javadowngrader.impl.classtransform.classprovider;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import net.lenni0451.classtransform.utils.tree.IClassProvider;
 
-public class GeneralUtil {
+import java.nio.file.FileSystem;
 
-    public static <T> List<T> flatten(List<List<T>> list) {
-        return list.stream()
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+public class FileSystemClassProvider extends PathClassProvider {
+
+    protected final FileSystem fs;
+
+    public FileSystemClassProvider(final FileSystem fs, final IClassProvider parent) {
+        super(fs.getRootDirectories().iterator().next(), parent);
+
+        this.fs = fs;
     }
 
 }

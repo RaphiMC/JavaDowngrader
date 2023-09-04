@@ -15,19 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.transform;
+package net.raphimc.javadowngrader.impl.classtransform.classprovider;
 
 import net.lenni0451.classtransform.utils.tree.IClassProvider;
+import net.raphimc.javadowngrader.impl.classtransform.util.FileSystemUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.FileSystems;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.NoSuchElementException;
 
 public class LazyFileClassProvider extends AbstractClassProvider implements AutoCloseable {
@@ -68,9 +66,7 @@ public class LazyFileClassProvider extends AbstractClassProvider implements Auto
         }
 
         try {
-            return new ClosingFileSystemClassProvider(FileSystems.newFileSystem(uri, Collections.emptyMap()), null);
-        } catch (FileSystemAlreadyExistsException e) {
-            return new FileSystemClassProvider(FileSystems.getFileSystem(uri), null);
+            return new ClosingFileSystemClassProvider(FileSystemUtil.getOrCreateFileSystem(uri), null);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

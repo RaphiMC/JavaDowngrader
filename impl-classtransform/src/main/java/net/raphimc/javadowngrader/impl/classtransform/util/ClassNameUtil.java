@@ -15,20 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.transform;
+package net.raphimc.javadowngrader.impl.classtransform.util;
 
-import net.lenni0451.classtransform.utils.tree.IClassProvider;
+import net.lenni0451.classtransform.utils.ASMUtils;
 
-import java.nio.file.FileSystem;
+import java.nio.file.Path;
 
-public class FileSystemClassProvider extends PathClassProvider {
+public class ClassNameUtil {
 
-    protected final FileSystem fs;
+    public static String toClassFilename(final String className) {
+        return ASMUtils.slash(className).concat(".class");
+    }
 
-    public FileSystemClassProvider(final FileSystem fs, final IClassProvider parent) {
-        super(fs.getRootDirectories().iterator().next(), parent);
+    public static String toClassName(final String classFilename) {
+        return ASMUtils.dot(classFilename.substring(0, classFilename.length() - 6));
+    }
 
-        this.fs = fs;
+    public static String slashName(final Path path) {
+        return path.toString().replace(path.getFileSystem().getSeparator(), "/");
     }
 
 }

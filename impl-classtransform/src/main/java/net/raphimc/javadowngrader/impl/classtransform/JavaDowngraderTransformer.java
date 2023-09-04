@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.transform;
+package net.raphimc.javadowngrader.impl.classtransform;
 
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.transformer.IBytecodeTransformer;
@@ -28,9 +28,31 @@ import java.util.function.Predicate;
 
 public class JavaDowngraderTransformer implements IBytecodeTransformer {
 
+    public static final int NATIVE_CLASS_VERSION;
+
+    static {
+        final String classVersion = System.getProperty("java.class.version");
+        final String[] versions = classVersion.split("\\.");
+        final int majorVersion = Integer.parseInt(versions[0]);
+        final int minorVersion = Integer.parseInt(versions[1]);
+        NATIVE_CLASS_VERSION = minorVersion << 16 | majorVersion;
+    }
+
     private final TransformerManager transformerManager;
     private final int targetVersion;
     private final Predicate<String> classFilter;
+
+    public JavaDowngraderTransformer(final TransformerManager transformerManager) {
+        this(transformerManager, NATIVE_CLASS_VERSION);
+    }
+
+    public JavaDowngraderTransformer(final TransformerManager transformerManager, final int targetVersion) {
+        this(transformerManager, targetVersion, s -> true);
+    }
+
+    public JavaDowngraderTransformer(final TransformerManager transformerManager, final Predicate<String> classFilter) {
+        this(transformerManager, NATIVE_CLASS_VERSION, classFilter);
+    }
 
     public JavaDowngraderTransformer(final TransformerManager transformerManager, final int targetVersion, final Predicate<String> classFilter) {
         this.transformerManager = transformerManager;

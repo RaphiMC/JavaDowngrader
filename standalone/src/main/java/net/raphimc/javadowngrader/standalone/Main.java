@@ -22,11 +22,13 @@ import me.tongfei.progressbar.ProgressBarBuilder;
 import me.tongfei.progressbar.ProgressBarStyle;
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
+import net.raphimc.javadowngrader.impl.classtransform.JavaDowngraderTransformer;
+import net.raphimc.javadowngrader.impl.classtransform.classprovider.LazyFileClassProvider;
+import net.raphimc.javadowngrader.impl.classtransform.classprovider.PathClassProvider;
+import net.raphimc.javadowngrader.impl.classtransform.util.ClassNameUtil;
+import net.raphimc.javadowngrader.impl.classtransform.util.FileSystemUtil;
+import net.raphimc.javadowngrader.runtime.RuntimeRoot;
 import net.raphimc.javadowngrader.standalone.progress.MultiThreadedProgressBar;
-import net.raphimc.javadowngrader.standalone.transform.JavaDowngraderTransformer;
-import net.raphimc.javadowngrader.standalone.transform.LazyFileClassProvider;
-import net.raphimc.javadowngrader.standalone.transform.PathClassProvider;
-import net.raphimc.javadowngrader.standalone.util.CloseableSupplier;
 import net.raphimc.javadowngrader.standalone.util.GeneralUtil;
 import net.raphimc.javadowngrader.util.Constants;
 import org.slf4j.Logger;
@@ -76,9 +78,9 @@ public class Main {
                 .withRequiredArg()
                 .withValuesConvertedBy(new PathConverter());
         final OptionSpec<Integer> threadCount = parser.acceptsAll(asList("thread_count", "threads", "t"), "The number of threads to use for the downgrading")
-            .withRequiredArg()
-            .ofType(Integer.class)
-            .defaultsTo(Math.min(Runtime.getRuntime().availableProcessors(), 255));
+                .withRequiredArg()
+                .ofType(Integer.class)
+                .defaultsTo(Math.min(Runtime.getRuntime().availableProcessors(), 255));
 
         final OptionSet options;
         try {
@@ -117,10 +119,10 @@ public class Main {
         try {
             final long start = System.nanoTime();
             doConversion(
-                inputFile, outputFile,
-                options.valueOf(version),
-                GeneralUtil.flatten(options.valuesOf(libraryPath)),
-                Math.min(options.valueOf(threadCount), 255)
+                    inputFile, outputFile,
+                    options.valueOf(version),
+                    GeneralUtil.flatten(options.valuesOf(libraryPath)),
+                    Math.min(options.valueOf(threadCount), 255)
             );
             final long end = System.nanoTime();
             LOGGER.info(
@@ -176,60 +178,41 @@ public class Main {
         LOGGER.info("Opening source JAR");
         try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
             final Path inRoot = inFs.getRootDirectories().iterator().next();
+
             final TransformerManager transformerManager = new TransformerManager(
                     new PathClassProvider(inRoot, new LazyFileClassProvider(libraryPath, new BasicClassProvider()))
             );
             transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(
-                    transformerManager, targetVersion.getVersion(),
-                    c -> Files.isRegularFile(inRoot.resolve(GeneralUtil.toClassFilename(c)))
+                    transformerManager, targetVersion.getVersion(), c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c)))
             ));
 
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
                 final Path outRoot = outFs.getRootDirectories().iterator().next();
-                LOGGER.info("Copying runtime classes");
-                try (CloseableSupplier<Path, IOException> supplier = GeneralUtil.getPath(Main.class.getResource(
-                    '/' + Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + Constants.JAVADOWNGRADER_RUNTIME_ROOT
-                ).toURI())) {
-                    final Path runtimeRoot = supplier.get().getParent();
-                    try (Stream<Path> stream = Files.walk(runtimeRoot)) {
-                        stream.filter(Files::isRegularFile)
-                            .filter(p -> !p.getFileName().toString().equals(Constants.JAVADOWNGRADER_RUNTIME_ROOT))
-                            .forEach(p -> {
-                                final String relative = GeneralUtil.slashName(runtimeRoot.relativize(p));
-                                final Path dest = outRoot.resolve(Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + relative);
-                                try {
-                                    Files.createDirectories(dest.getParent());
-                                    Files.copy(p, dest);
-                                } catch (IOException e) {
-                                    throw new UncheckedIOException(e);
-                                }
-                            });
-                    }
-                }
+
                 LOGGER.info("Downgrading classes with {} thread(s)", threadCount);
                 final ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
                 final List<Callable<Void>> tasks;
                 final MultiThreadedProgressBar[] pb = new MultiThreadedProgressBar[1];
                 try (Stream<Path> stream = Files.walk(inRoot)) {
                     tasks = stream.map(path -> (Callable<Void>) () -> {
-                        final String relative = GeneralUtil.slashName(inRoot.relativize(path));
+                        final String relative = ClassNameUtil.slashName(inRoot.relativize(path));
                         pb[0].setThreadTask(relative);
-                        final Path inOther = outRoot.resolve(relative);
+                        final Path dest = outRoot.resolve(relative);
                         if (Files.isDirectory(path)) {
-                            Files.createDirectories(inOther);
+                            Files.createDirectories(dest);
                             pb[0].step();
                             return null;
                         }
-                        final Path parent = inOther.getParent();
+                        final Path parent = dest.getParent();
                         if (parent != null) {
                             Files.createDirectories(parent);
                         }
-                        if (!relative.endsWith(".class")) {
-                            Files.copy(path, inOther);
+                        if (!relative.endsWith(".class") || relative.contains("META-INF/versions/")) {
+                            Files.copy(path, dest);
                             pb[0].step();
                             return null;
                         }
-                        final String className = GeneralUtil.toClassName(relative);
+                        final String className = ClassNameUtil.toClassName(relative);
                         final byte[] bytecode = Files.readAllBytes(path);
                         byte[] result = null;
                         try {
@@ -237,7 +220,7 @@ public class Main {
                         } catch (Exception e) {
                             LOGGER.error("Failed to transform {}", className, e);
                         }
-                        Files.write(inOther, result != null ? result : bytecode);
+                        Files.write(dest, result != null ? result : bytecode);
 
                         pb[0].step();
                         return null;
@@ -245,11 +228,11 @@ public class Main {
                 }
                 try {
                     pb[0] = MultiThreadedProgressBar.create(
-                        new ProgressBarBuilder()
-                            .setTaskName("Downgrading")
-                            .setStyle(ProgressBarStyle.ASCII)
-                            .setInitialMax(tasks.size())
-                            .setUpdateIntervalMillis(100)
+                            new ProgressBarBuilder()
+                                    .setTaskName("Downgrading")
+                                    .setStyle(ProgressBarStyle.ASCII)
+                                    .setInitialMax(tasks.size())
+                                    .setUpdateIntervalMillis(100)
                     );
                     threadPool.invokeAll(tasks);
                 } finally {
@@ -260,6 +243,25 @@ public class Main {
                 threadPool.shutdown();
                 if (!threadPool.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
                     throw new IllegalStateException("Thread pool didn't shutdown correctly");
+                }
+
+                LOGGER.info("Copying runtime classes");
+                try (FileSystem runtimeRootFs = FileSystemUtil.getOrCreateFileSystem(RuntimeRoot.class.getResource("").toURI())) {
+                    final Path runtimeRoot = runtimeRootFs.getPath(Constants.JAVADOWNGRADER_RUNTIME_PACKAGE);
+                    try (Stream<Path> stream = Files.walk(runtimeRoot)) {
+                        stream.filter(Files::isRegularFile)
+                                .filter(p -> !p.getFileName().toString().equals(Constants.JAVADOWNGRADER_RUNTIME_ROOT))
+                                .forEach(path -> {
+                                    final String relative = ClassNameUtil.slashName(runtimeRoot.relativize(path));
+                                    final Path dest = outRoot.resolve(Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + relative);
+                                    try {
+                                        Files.createDirectories(dest.getParent());
+                                        Files.copy(path, dest);
+                                    } catch (IOException e) {
+                                        throw new UncheckedIOException(e);
+                                    }
+                                });
+                    }
                 }
                 LOGGER.info("Writing final JAR");
             }

@@ -10,17 +10,8 @@ configurations {
     api.extendsFrom include
 }
 
-repositories {
-    maven {
-        name = "Lenni0451 Releases"
-        url "https://maven.lenni0451.net/releases"
-    }
-}
-
 dependencies {
-    include project(":")
-
-    include "net.lenni0451.classtransform:core:1.10.1"
+    include project(":impl-classtransform")
 
     include "net.sf.jopt-simple:jopt-simple:5.0.4"
 

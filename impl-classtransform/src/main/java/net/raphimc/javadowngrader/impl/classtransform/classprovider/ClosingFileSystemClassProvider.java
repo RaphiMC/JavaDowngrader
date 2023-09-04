@@ -15,17 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.util;
+package net.raphimc.javadowngrader.impl.classtransform.classprovider;
 
-public interface Closeable<E extends Exception> extends AutoCloseable {
+import net.lenni0451.classtransform.utils.tree.IClassProvider;
+
+import java.io.IOException;
+import java.nio.file.FileSystem;
+
+public class ClosingFileSystemClassProvider extends FileSystemClassProvider implements AutoCloseable {
+
+    public ClosingFileSystemClassProvider(final FileSystem fs, final IClassProvider parent) {
+        super(fs, parent);
+    }
+
     @Override
-    void close() throws E;
-
-    static <E extends Exception> Closeable<E> ofRunnable(Runnable run) {
-        return run::run;
+    public void close() throws IOException {
+        this.fs.close();
     }
 
-    static <E extends Exception> Closeable<E> none() {
-        return () -> {};
-    }
 }

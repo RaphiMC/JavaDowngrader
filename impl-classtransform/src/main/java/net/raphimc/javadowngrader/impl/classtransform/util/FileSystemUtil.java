@@ -15,22 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.transform;
-
-import net.lenni0451.classtransform.utils.tree.IClassProvider;
+package net.raphimc.javadowngrader.impl.classtransform.util;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.util.Collections;
 
-public class ClosingFileSystemClassProvider extends FileSystemClassProvider implements AutoCloseable {
+public class FileSystemUtil {
 
-    public ClosingFileSystemClassProvider(final FileSystem fs, final IClassProvider parent) {
-        super(fs, parent);
-    }
-
-    @Override
-    public void close() throws IOException {
-        this.fs.close();
+    public static FileSystem getOrCreateFileSystem(final URI uri) throws IOException {
+        FileSystem fileSystem;
+        try {
+            fileSystem = FileSystems.getFileSystem(uri);
+        } catch (FileSystemNotFoundException e) {
+            fileSystem = FileSystems.newFileSystem(uri, Collections.emptyMap());
+        }
+        return fileSystem;
     }
 
 }
