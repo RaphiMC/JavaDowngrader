@@ -15,17 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.util;
+package net.raphimc.javadowngrader.impl.classtransform.util;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.util.Collections;
 
-public class GeneralUtil {
+public class FileSystemUtil {
 
-    public static <T> List<T> flatten(List<List<T>> list) {
-        return list.stream()
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+    public static FileSystem getOrCreateFileSystem(final URI uri) throws IOException {
+        FileSystem fileSystem;
+        try {
+            fileSystem = FileSystems.getFileSystem(uri);
+        } catch (FileSystemNotFoundException e) {
+            fileSystem = FileSystems.newFileSystem(uri, Collections.emptyMap());
+        }
+        return fileSystem;
     }
 
 }

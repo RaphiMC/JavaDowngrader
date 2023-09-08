@@ -9,3 +9,5 @@ rootProject.name = "JavaDowngrader"
 
 include(":standalone")
 include(":runtime-dep")
+include(":impl-classtransform")
+include(":gradle-plugin")

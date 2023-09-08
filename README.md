@@ -29,6 +29,47 @@ Here is an example command to convert the jar input.jar to Java 8 and output it 
 ## Usage (As a library)
 To transform a ``ClassNode`` you can use the ``JavaDowngrader`` class.  
 As a low level class modification framework in your application [ClassTransform](https://github.com/Lenni0451/ClassTransform) is recommended.
+JavaDowngrader provides the ``impl-classtransform`` submodule which contains various utility classes for ClassTransform.
+
+## Usage (In Gradle)
+To use JavaDowngrader in gradle (To downgrade a whole jar or one of your source sets) you have to add the following to the top of your build.gradle:
+```groovy
+buildscript {
+    repositories {
+        maven {
+            name = "Lenni0451 Releases"
+            url "https://maven.lenni0451.net/releases"
+        }
+    }
+
+    dependencies {
+        classpath "net.raphimc.javadowngrader:gradle-plugin:1.0.0"
+    }
+}
+```
+
+### Downgrade the main source set
+```groovy
+tasks.register("java8Main", DowngradeSourceSetTask) {
+    sourceSet = sourceSets.main
+}.get().dependsOn("classes")
+classes.finalizedBy("java8Main")
+```
+
+### Downgrade the built jar (If you use Java 8+ libraries)
+```groovy
+tasks.register("java8Jar", DowngradeJarTask) {
+    input = tasks.jar.archiveFile.get().asFile
+    outputSuffix = "+java8"
+    compileClassPath = sourceSets.main.compileClasspath
+}.get().dependsOn("build")
+build.finalizedBy("java8Jar")
+```
+
+Some of the optional properties include:
+- ``targetVersion``: The target classfile version (Default: 8)
+- ``outputSuffix``: The suffix to append to the output jar file (Default: "-downgraded")
+- ``copyRuntimeClasses``: Whether to copy the JavaDowngrader runtime classes to the output jar (Default: true). Should be set to false if your jar already contains JavaDowngrader itself
 
 ## Contact
 If you encounter any issues, please report them on the

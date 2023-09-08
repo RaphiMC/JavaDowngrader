@@ -15,58 +15,70 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.transform;
+package net.raphimc.javadowngrader.impl.classtransform.classprovider;
 
 import net.lenni0451.classtransform.utils.tree.IClassProvider;
+import net.raphimc.javadowngrader.impl.classtransform.util.FileSystemUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
-import java.nio.file.FileSystems;
-import java.util.Collections;
-import java.util.List;
+import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 
 public class LazyFileClassProvider extends AbstractClassProvider implements AutoCloseable {
+
     private final Object[] path;
 
-    public LazyFileClassProvider(List<File> path, IClassProvider parent) {
+    public LazyFileClassProvider(final Collection<File> path, final IClassProvider parent) {
         super(parent);
+
         this.path = path.toArray();
     }
 
     @Override
     public byte[] getClass(String name) {
-        for (int i = 0; i < path.length; i++) {
-            Object element = path[i];
+        for (int i = 0; i < this.path.length; i++) {
+            Object element = this.path[i];
             if (element instanceof File) {
-                synchronized (path) {
-                    if ((element = path[i]) instanceof File) {
-                        path[i] = element = open((File)element);
+                synchronized (this.path) {
+                    if ((element = this.path[i]) instanceof File) {
+                        this.path[i] = element = open((File) element);
                     }
                 }
             }
             try {
-                return ((PathClassProvider)element).getClass(name);
+                return ((PathClassProvider) element).getClass(name);
             } catch (NoSuchElementException ignored) {
             }
         }
         return super.getClass(name);
     }
 
-    private static PathClassProvider open(File file) {
+    private static PathClassProvider open(final File file) {
+        final URI uri;
         try {
-            return new ClosingFileSystemClassProvider(FileSystems.newFileSystem(new URI("jar:" + file.toURI()), Collections.emptyMap()), null);
-        } catch (Exception e) {
-            throw e instanceof RuntimeException ? (RuntimeException)e : new RuntimeException(e);
+            uri = new URI("jar:" + file.toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            return new ClosingFileSystemClassProvider(FileSystemUtil.getOrCreateFileSystem(uri), null);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
     @Override
     public void close() throws Exception {
-        for (final Object element : path) {
+        for (Object element : this.path) {
             if (element instanceof AutoCloseable) {
-                ((AutoCloseable)element).close();
+                ((AutoCloseable) element).close();
             }
         }
     }
+
 }

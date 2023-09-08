@@ -15,23 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.transform;
+package net.raphimc.javadowngrader.impl.classtransform.util;
 
-import net.lenni0451.classtransform.utils.tree.IClassProvider;
+import net.lenni0451.classtransform.utils.ASMUtils;
 
-import java.io.IOException;
-import java.nio.file.FileSystem;
+import java.nio.file.Path;
 
-public class ClosingFileSystemClassProvider extends PathClassProvider implements AutoCloseable {
-    private final FileSystem fs;
+public class ClassNameUtil {
 
-    public ClosingFileSystemClassProvider(FileSystem fs, IClassProvider parent) {
-        super(fs.getRootDirectories().iterator().next(), parent);
-        this.fs = fs;
+    public static String toClassFilename(final String className) {
+        return ASMUtils.slash(className).concat(".class");
     }
 
-    @Override
-    public void close() throws IOException {
-        fs.close();
+    public static String toClassName(final String classFilename) {
+        return ASMUtils.dot(classFilename.substring(0, classFilename.length() - 6));
     }
+
+    public static String slashName(final Path path) {
+        return path.toString().replace(path.getFileSystem().getSeparator(), "/");
+    }
+
 }

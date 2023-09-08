@@ -15,10 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone.transform;
+package net.raphimc.javadowngrader.impl.classtransform.classprovider;
 
 import net.lenni0451.classtransform.utils.tree.IClassProvider;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -26,31 +25,31 @@ import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
 public abstract class AbstractClassProvider implements IClassProvider {
-    @Nullable
+
     private final IClassProvider parent;
 
-    protected AbstractClassProvider(@Nullable IClassProvider parent) {
+    protected AbstractClassProvider(final IClassProvider parent) {
         this.parent = parent;
-    }
-
-    @Nullable
-    public IClassProvider getParent() {
-        return parent;
     }
 
     @Override
     public byte[] getClass(String name) {
-        if (parent == null) {
+        if (this.parent == null) {
             throw new NoSuchElementException("Unable to find class '" + name + "'");
         }
-        return parent.getClass(name);
+        return this.parent.getClass(name);
     }
 
     @Override
     public Map<String, Supplier<byte[]>> getAllClasses() {
-        if (parent == null) {
+        if (this.parent == null) {
             return Collections.emptyMap();
         }
-        return parent.getAllClasses();
+        return this.parent.getAllClasses();
     }
+
+    public IClassProvider getParent() {
+        return this.parent;
+    }
+
 }

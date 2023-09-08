@@ -3,18 +3,25 @@ allprojects {
     apply plugin: "maven-publish"
     apply plugin: "signing"
 
-    java.toolchain.languageVersion = JavaLanguageVersion.of(8)
-    compileJava.options.encoding = compileTestJava.options.encoding = javadoc.options.encoding = "UTF-8"
+    base {
+        java.toolchain.languageVersion = JavaLanguageVersion.of(8)
+        compileJava.options.encoding = compileTestJava.options.encoding = javadoc.options.encoding = "UTF-8"
 
-    group = project.maven_group
-    archivesBaseName = project.maven_name
-    version = project.maven_version
-    if (!project.maven_group) group = rootProject.maven_group
-    if (!project.maven_name) archivesBaseName = rootProject.maven_name
-    if (!project.maven_version) version = rootProject.maven_version
+        group = project.maven_group ?: rootProject.maven_group
+        archivesName = project.maven_name ?: rootProject.maven_name
+        version = project.maven_version ?: rootProject.maven_version
+    }
 
     repositories {
         mavenCentral()
+        maven {
+            name = "Lenni0451 Releases"
+            url "https://maven.lenni0451.net/releases"
+        }
+        maven {
+            name = "Lenni0451 Snapshots"
+            url "https://maven.lenni0451.net/snapshots"
+        }
     }
 
     java {
@@ -24,7 +31,7 @@ allprojects {
 
     jar {
         from("LICENSE") {
-            rename { "${it}_${project.archivesBaseName}" }
+            rename { "${it}_${project.name ?: rootProject.name}" }
         }
     }
 
@@ -92,5 +99,4 @@ dependencies {
     api project(":runtime-dep")
 
     api "org.ow2.asm:asm-commons:9.5"
-    api "org.slf4j:slf4j-api:2.0.7"
 }
