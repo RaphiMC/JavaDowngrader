@@ -1,5 +1,5 @@
 dependencies {
     api project(":impl-classtransform")
 
-    implementation gradleApi()
+    compileOnly gradleApi()
 }
