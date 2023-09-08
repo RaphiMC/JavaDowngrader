@@ -21,6 +21,7 @@ import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.transformer.IBytecodeTransformer;
 import net.lenni0451.classtransform.utils.ASMUtils;
 import net.raphimc.javadowngrader.JavaDowngrader;
+import net.raphimc.javadowngrader.RuntimeDepCollector;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.nio.ByteBuffer;
@@ -41,6 +42,7 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
     private final TransformerManager transformerManager;
     private final int targetVersion;
     private final Predicate<String> classFilter;
+    private final RuntimeDepCollector depCollector;
 
     public JavaDowngraderTransformer(final TransformerManager transformerManager) {
         this(transformerManager, NATIVE_CLASS_VERSION);
@@ -50,14 +52,26 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
         this(transformerManager, targetVersion, s -> true);
     }
 
+    @Deprecated
     public JavaDowngraderTransformer(final TransformerManager transformerManager, final Predicate<String> classFilter) {
         this(transformerManager, NATIVE_CLASS_VERSION, classFilter);
     }
 
+    @Deprecated
     public JavaDowngraderTransformer(final TransformerManager transformerManager, final int targetVersion, final Predicate<String> classFilter) {
+        this(transformerManager, targetVersion, classFilter, RuntimeDepCollector.NULL);
+    }
+
+    JavaDowngraderTransformer(
+        TransformerManager transformerManager,
+        int targetVersion,
+        Predicate<String> classFilter,
+        RuntimeDepCollector depCollector
+    ) {
         this.transformerManager = transformerManager;
         this.targetVersion = targetVersion;
         this.classFilter = classFilter;
+        this.depCollector = depCollector;
     }
 
     @Override
@@ -70,12 +84,51 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
         }
 
         final ClassNode classNode = ASMUtils.fromBytes(bytecode);
-        JavaDowngrader.downgrade(classNode, this.targetVersion);
+        JavaDowngrader.downgrade(classNode, this.targetVersion, depCollector);
 
         if (calculateStackMapFrames) {
             return ASMUtils.toBytes(classNode, this.transformerManager.getClassTree(), this.transformerManager.getClassProvider());
         } else {
             return ASMUtils.toStacklessBytes(classNode);
+        }
+    }
+
+    public Builder builder(TransformerManager transformerManager) {
+        return new Builder(transformerManager);
+    }
+
+    public static final class Builder {
+        private final TransformerManager transformerManager;
+        private int targetVersion = NATIVE_CLASS_VERSION;
+        private Predicate<String> classFilter = c -> true;
+        private RuntimeDepCollector depCollector = RuntimeDepCollector.NULL;
+
+        Builder(TransformerManager transformerManager) {
+            this.transformerManager = transformerManager;
+        }
+
+        public Builder targetVersion(int targetVersion) {
+            this.targetVersion = targetVersion;
+            return this;
+        }
+
+        public Builder classFilter(Predicate<String> classFilter) {
+            this.classFilter = classFilter;
+            return this;
+        }
+
+        public Builder depCollector(RuntimeDepCollector depCollector) {
+            this.depCollector = depCollector;
+            return this;
+        }
+
+        public JavaDowngraderTransformer build() {
+            return new JavaDowngraderTransformer(
+                transformerManager,
+                targetVersion,
+                classFilter,
+                depCollector
+            );
         }
     }
 
