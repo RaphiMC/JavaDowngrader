@@ -74,7 +74,7 @@ public abstract class DowngradeJarTask extends DefaultTask {
         final File inputFile = getInput().getAsFile().get();
         System.out.println("Downgrading jar: " + inputFile);
 
-        try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
+        try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), (ClassLoader)null)) {
             final Path inRoot = inFs.getRootDirectories().iterator().next();
 
             final Collection<String> runtimeDeps = new HashSet<>();
@@ -133,7 +133,9 @@ public abstract class DowngradeJarTask extends DefaultTask {
                     for (final String runtimeDep : runtimeDeps) {
                         final String classPath = runtimeDep.concat(".class");
                         try (InputStream is = RuntimeRoot.class.getResourceAsStream("/" + classPath)) {
-                            if (is == null) continue;
+                            if (is == null) {
+                                throw new IllegalStateException("Missing runtime class " + runtimeDep);
+                            }
                             final Path dest = outRoot.resolve(classPath);
                             final Path parent = dest.getParent();
                             if (parent != null) {

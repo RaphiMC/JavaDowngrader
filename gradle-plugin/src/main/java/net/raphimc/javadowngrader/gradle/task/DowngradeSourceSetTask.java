@@ -103,7 +103,9 @@ public abstract class DowngradeSourceSetTask extends DefaultTask {
                 for (final String runtimeDep : runtimeDeps) {
                     final String classPath = runtimeDep.concat(".class");
                     try (InputStream is = RuntimeRoot.class.getResourceAsStream("/" + classPath)) {
-                        if (is == null) continue;
+                        if (is == null) {
+                            throw new IllegalStateException("Missing runtime class " + runtimeDep);
+                        }
                         final Path dest = inRoot.resolve(classPath);
                         final Path parent = dest.getParent();
                         if (parent != null) {
