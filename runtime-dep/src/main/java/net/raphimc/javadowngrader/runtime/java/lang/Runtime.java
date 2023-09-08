@@ -70,7 +70,7 @@ public class Runtime {
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static class Version implements Comparable<Version> {
-        private final List<Integer> version;
+        private final List<Integer> version; // I wish these could be OptionalInt, but the getters require otherwise
         private final Optional<String> pre;
         private final Optional<Integer> build;
         private final Optional<String> optional;
@@ -279,7 +279,10 @@ public class Runtime {
         public String toString() {
             final StringBuilder sb = new StringBuilder(version.stream().map(Object::toString).collect(Collectors.joining(".")));
 
-            pre.ifPresent(v -> sb.append("-").append(v));
+            //noinspection OptionalIsPresent
+            if (pre.isPresent()) {
+                sb.append("-").append(pre.get());
+            }
 
             if (build.isPresent()) {
                 sb.append("+").append(build.get());
@@ -298,36 +301,27 @@ public class Runtime {
         @Override
         @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
         public boolean equals(Object obj) {
-            final boolean ret = equalsIgnoreOptional(obj);
-            if (!ret) {
-                return false;
-            }
-
-            final Version that = (Version)obj;
-            return this.optional().equals(that.optional());
+            return equalsIgnoreOptional(obj) && optional().equals(((Version)obj).optional());
         }
 
         public boolean equalsIgnoreOptional(Object obj) {
             if (this == obj) {
                 return true;
             }
-            if ((obj instanceof Version)) {
-                final Version that = (Version)obj;
-                return this.version().equals(that.version) && this.pre().equals(that.pre()) && this.build().equals(that.build());
+            if (!(obj instanceof Version)) {
+                return false;
             }
-            return false;
+            final Version o = (Version)obj;
+            return version().equals(o.version) && pre().equals(o.pre()) && build().equals(o.build());
         }
 
         @Override
         public int hashCode() {
             int h = 1;
-            final int p = 17;
-
-            h = p * h + version.hashCode();
-            h = p * h + pre.hashCode();
-            h = p * h + build.hashCode();
-            h = p * h + optional.hashCode();
-
+            h = 17 * h + version.hashCode();
+            h = 17 * h + pre.hashCode();
+            h = 17 * h + build.hashCode();
+            h = 17 * h + optional.hashCode();
             return h;
         }
     }
