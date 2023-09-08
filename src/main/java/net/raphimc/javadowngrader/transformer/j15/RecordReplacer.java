@@ -25,6 +25,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.RecordComponentNode;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +56,9 @@ public class RecordReplacer {
         classNode.access &= ~Opcodes.ACC_RECORD;
         if (classNode.signature != null) {
             classNode.signature = classNode.signature.replace("Ljava/lang/Record;", "Ljava/lang/Object;");
+        }
+        if (classNode.recordComponents == null) {
+            classNode.recordComponents = Collections.emptyList();
         }
 
         classNode.methods.remove(ASMUtil.getMethod(classNode, "equals", EQUALS_DESC));
