@@ -25,8 +25,12 @@ import net.raphimc.javadowngrader.impl.classtransform.classprovider.PathClassPro
 import net.raphimc.javadowngrader.impl.classtransform.util.ClassNameUtil;
 import net.raphimc.javadowngrader.runtime.RuntimeRoot;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.Internal;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
 import org.objectweb.asm.Opcodes;
 
@@ -36,59 +40,57 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.stream.Stream;
 
-public class DowngradeJarTask extends DefaultTask {
+public abstract class DowngradeJarTask extends DefaultTask {
 
-    @Internal
-    private File input;
+    @InputFile
+    public abstract RegularFileProperty getInput();
 
-    @Internal
-    private String outputSuffix = "-downgraded";
+    @Input
+    public abstract Property<String> getOutputSuffix();
 
-    @Internal
-    private FileCollection compileClassPath;
+    @InputFiles
+    public abstract ConfigurableFileCollection getCompileClassPath();
 
-    @Internal
-    private int targetVersion = Opcodes.V1_8;
+    @Input
+    public abstract Property<Integer> getTargetVersion();
 
-    @Internal
-    private boolean copyRuntimeClasses = true;
+    @Input
+    public abstract Property<Boolean> getCopyRuntimeClasses();
+
+    public DowngradeJarTask() {
+        getOutputSuffix().convention("-downgraded");
+        getTargetVersion().convention(Opcodes.V1_8);
+        getCopyRuntimeClasses().convention(true);
+    }
 
     @TaskAction
     public void run() throws IOException, URISyntaxException {
-        Objects.requireNonNull(this.input, "input must be set");
-        Objects.requireNonNull(this.outputSuffix, "outputSuffix must be set");
-        Objects.requireNonNull(this.compileClassPath, "compileClassPath must be set");
-        if (!this.input.exists()) throw new IllegalArgumentException("input does not exist");
-        if (!this.input.isFile() || !this.input.getName().endsWith(".jar")) throw new IllegalArgumentException("input is not a jar file");
+        final File inputFile = getInput().getAsFile().get();
+        System.out.println("Downgrading jar: " + inputFile);
 
-        System.out.println("Downgrading jar: " + this.input.getName());
-        try (FileSystem inFs = FileSystems.newFileSystem(this.input.toPath(), null)) {
+        try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
             final Path inRoot = inFs.getRootDirectories().iterator().next();
 
             final Collection<String> runtimeDeps = new HashSet<>();
             final TransformerManager transformerManager = new TransformerManager(
-                    new PathClassProvider(inRoot, new LazyFileClassProvider(this.compileClassPath.getFiles(), new BasicClassProvider()))
+                new PathClassProvider(inRoot, new LazyFileClassProvider(getCompileClassPath().getFiles(), new BasicClassProvider()))
             );
             transformerManager.addBytecodeTransformer(
                 JavaDowngraderTransformer.builder(transformerManager)
-                    .targetVersion(targetVersion)
+                    .targetVersion(getTargetVersion().get())
                     .classFilter(c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c))))
                     .depCollector(runtimeDeps::add)
                     .build()
             );
 
-            final String outputName = this.input.getName().substring(0, this.input.getName().length() - 4) + this.outputSuffix;
-            final File outputFile = new File(this.input.getParentFile(), outputName + ".jar");
+            final String outputName = inputFile.getName().substring(0, inputFile.getName().length() - 4) + getOutputSuffix().get();
+            final File outputFile = new File(inputFile.getParentFile(), outputName + ".jar");
 
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
                 final Path outRoot = outFs.getRootDirectories().iterator().next();
@@ -108,7 +110,7 @@ public class DowngradeJarTask extends DefaultTask {
                                 Files.createDirectories(parent);
                             }
                             if (!relative.endsWith(".class") || relative.contains("META-INF/versions/")) {
-                                Files.copy(path, dest);
+                                Files.copy(path, dest, StandardCopyOption.REPLACE_EXISTING);
                                 return;
                             }
                             final String className = ClassNameUtil.toClassName(relative);
@@ -127,7 +129,7 @@ public class DowngradeJarTask extends DefaultTask {
                 }
 
                 // Copy runtime classes
-                if (this.copyRuntimeClasses) {
+                if (getCopyRuntimeClasses().get()) {
                     for (final String runtimeDep : runtimeDeps) {
                         final String classPath = runtimeDep.concat(".class");
                         try (InputStream is = RuntimeRoot.class.getResourceAsStream("/" + classPath)) {
@@ -137,52 +139,12 @@ public class DowngradeJarTask extends DefaultTask {
                             if (parent != null) {
                                 Files.createDirectories(parent);
                             }
-                            Files.copy(is, dest);
+                            Files.copy(is, dest, StandardCopyOption.REPLACE_EXISTING);
                         }
                     }
                 }
             }
         }
-    }
-
-    public File getInput() {
-        return this.input;
-    }
-
-    public String getOutputSuffix() {
-        return this.outputSuffix;
-    }
-
-    public FileCollection getCompileClassPath() {
-        return this.compileClassPath;
-    }
-
-    public int getTargetVersion() {
-        return this.targetVersion;
-    }
-
-    public boolean getCopyRuntimeClasses() {
-        return this.copyRuntimeClasses;
-    }
-
-    public void setInput(final File input) {
-        this.input = input;
-    }
-
-    public void setOutputSuffix(final String outputSuffix) {
-        this.outputSuffix = outputSuffix;
-    }
-
-    public void setCompileClassPath(final FileCollection compileClassPath) {
-        this.compileClassPath = compileClassPath;
-    }
-
-    public void setTargetVersion(final int targetVersion) {
-        this.targetVersion = targetVersion;
-    }
-
-    public void setCopyRuntimeClasses(final boolean copyRuntimeClasses) {
-        this.copyRuntimeClasses = copyRuntimeClasses;
     }
 
 }

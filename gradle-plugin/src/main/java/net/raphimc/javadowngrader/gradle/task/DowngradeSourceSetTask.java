@@ -25,7 +25,8 @@ import net.raphimc.javadowngrader.impl.classtransform.classprovider.PathClassPro
 import net.raphimc.javadowngrader.impl.classtransform.util.ClassNameUtil;
 import net.raphimc.javadowngrader.runtime.RuntimeRoot;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.tasks.Internal;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
 import org.objectweb.asm.Opcodes;
@@ -36,37 +37,39 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.stream.Stream;
 
-public class DowngradeSourceSetTask extends DefaultTask {
+public abstract class DowngradeSourceSetTask extends DefaultTask {
+    @Input
+    public abstract Property<SourceSet> getSourceSet();
 
-    @Internal
-    private SourceSet sourceSet;
+    @Input
+    public abstract Property<Integer> getTargetVersion();
 
-    @Internal
-    private int targetVersion = Opcodes.V1_8;
+    @Input
+    public abstract Property<Boolean> getCopyRuntimeClasses();
 
-    @Internal
-    private boolean copyRuntimeClasses = true;
+    public DowngradeSourceSetTask() {
+        getTargetVersion().convention(Opcodes.V1_8);
+        getCopyRuntimeClasses().convention(true);
+    }
 
     @TaskAction
     public void run() throws IOException {
-        Objects.requireNonNull(this.sourceSet, "sourceSet must be set");
-
-        for (File classesDir : this.sourceSet.getOutput().getClassesDirs()) {
+        for (File classesDir : getSourceSet().get().getOutput().getClassesDirs()) {
             System.out.println("Downgrading source set: " + this.getProject().getProjectDir().toPath().relativize(classesDir.toPath()));
             final Path inRoot = classesDir.toPath();
 
             final Collection<String> runtimeDeps = new HashSet<>();
             final TransformerManager transformerManager = new TransformerManager(
-                    new PathClassProvider(inRoot, new LazyFileClassProvider(this.sourceSet.getCompileClasspath().getFiles(), new BasicClassProvider()))
+                new PathClassProvider(inRoot, new LazyFileClassProvider(getSourceSet().get().getCompileClasspath().getFiles(), new BasicClassProvider()))
             );
             transformerManager.addBytecodeTransformer(
                 JavaDowngraderTransformer.builder(transformerManager)
-                    .targetVersion(targetVersion)
+                    .targetVersion(getTargetVersion().get())
                     .classFilter(c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c))))
                     .depCollector(runtimeDeps::add)
                     .build()
@@ -96,7 +99,7 @@ public class DowngradeSourceSetTask extends DefaultTask {
             }
 
             // Copy runtime classes
-            if (this.copyRuntimeClasses) {
+            if (getCopyRuntimeClasses().get()) {
                 for (final String runtimeDep : runtimeDeps) {
                     final String classPath = runtimeDep.concat(".class");
                     try (InputStream is = RuntimeRoot.class.getResourceAsStream("/" + classPath)) {
@@ -106,35 +109,11 @@ public class DowngradeSourceSetTask extends DefaultTask {
                         if (parent != null) {
                             Files.createDirectories(parent);
                         }
-                        Files.copy(is, dest);
+                        Files.copy(is, dest, StandardCopyOption.REPLACE_EXISTING);
                     }
                 }
             }
         }
-    }
-
-    public SourceSet getSourceSet() {
-        return this.sourceSet;
-    }
-
-    public int getTargetVersion() {
-        return this.targetVersion;
-    }
-
-    public boolean getCopyRuntimeClasses() {
-        return this.copyRuntimeClasses;
-    }
-
-    public void setSourceSet(final SourceSet sourceSet) {
-        this.sourceSet = sourceSet;
-    }
-
-    public void setTargetVersion(final int targetVersion) {
-        this.targetVersion = targetVersion;
-    }
-
-    public void setCopyRuntimeClasses(final boolean copyRuntimeClasses) {
-        this.copyRuntimeClasses = copyRuntimeClasses;
     }
 
 }
