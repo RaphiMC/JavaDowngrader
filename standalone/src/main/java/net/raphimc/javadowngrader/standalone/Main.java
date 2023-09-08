@@ -26,16 +26,15 @@ import net.raphimc.javadowngrader.impl.classtransform.JavaDowngraderTransformer;
 import net.raphimc.javadowngrader.impl.classtransform.classprovider.LazyFileClassProvider;
 import net.raphimc.javadowngrader.impl.classtransform.classprovider.PathClassProvider;
 import net.raphimc.javadowngrader.impl.classtransform.util.ClassNameUtil;
-import net.raphimc.javadowngrader.impl.classtransform.util.FileSystemUtil;
 import net.raphimc.javadowngrader.runtime.RuntimeRoot;
 import net.raphimc.javadowngrader.standalone.progress.MultiThreadedProgressBar;
 import net.raphimc.javadowngrader.standalone.util.GeneralUtil;
-import net.raphimc.javadowngrader.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -43,13 +42,11 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -179,12 +176,17 @@ public class Main {
         try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), null)) {
             final Path inRoot = inFs.getRootDirectories().iterator().next();
 
+            final Collection<String> runtimeDeps = Collections.newSetFromMap(new ConcurrentHashMap<>());
             final TransformerManager transformerManager = new TransformerManager(
                     new PathClassProvider(inRoot, new LazyFileClassProvider(libraryPath, new BasicClassProvider()))
             );
-            transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(
-                    transformerManager, targetVersion.getVersion(), c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c)))
-            ));
+            transformerManager.addBytecodeTransformer(
+                JavaDowngraderTransformer.builder(transformerManager)
+                    .targetVersion(targetVersion.getVersion())
+                    .classFilter(c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c))))
+                    .depCollector(runtimeDeps::add)
+                    .build()
+            );
 
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {
                 final Path outRoot = outFs.getRootDirectories().iterator().next();
@@ -245,22 +247,21 @@ public class Main {
                     throw new IllegalStateException("Thread pool didn't shutdown correctly");
                 }
 
-                LOGGER.info("Copying runtime classes");
-                try (FileSystem runtimeRootFs = FileSystemUtil.getOrCreateFileSystem(RuntimeRoot.class.getResource("").toURI())) {
-                    final Path runtimeRoot = runtimeRootFs.getPath(Constants.JAVADOWNGRADER_RUNTIME_PACKAGE);
-                    try (Stream<Path> stream = Files.walk(runtimeRoot)) {
-                        stream.filter(Files::isRegularFile)
-                                .filter(p -> !p.getFileName().toString().equals(Constants.JAVADOWNGRADER_RUNTIME_ROOT))
-                                .forEach(path -> {
-                                    final String relative = ClassNameUtil.slashName(runtimeRoot.relativize(path));
-                                    final Path dest = outRoot.resolve(Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + relative);
-                                    try {
-                                        Files.createDirectories(dest.getParent());
-                                        Files.copy(path, dest);
-                                    } catch (IOException e) {
-                                        throw new UncheckedIOException(e);
-                                    }
-                                });
+                LOGGER.info("Copying {} runtime class(es)", runtimeDeps.size());
+                for (final String runtimeDep : runtimeDeps) {
+                    final String classPath = runtimeDep.concat(".class");
+                    LOGGER.debug("Copying {}", classPath);
+                    try (InputStream is = RuntimeRoot.class.getResourceAsStream("/" + classPath)) {
+                        if (is == null) {
+                            LOGGER.warn("Runtime class '{}' not found! Skipping.", runtimeDep);
+                            continue;
+                        }
+                        final Path dest = outRoot.resolve(classPath);
+                        final Path parent = dest.getParent();
+                        if (parent != null) {
+                            Files.createDirectories(parent);
+                        }
+                        Files.copy(is, dest);
                     }
                 }
                 LOGGER.info("Writing final JAR");

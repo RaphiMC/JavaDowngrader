@@ -28,9 +28,7 @@ import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public abstract class DowngradingTransformer {
 
@@ -40,7 +38,7 @@ public abstract class DowngradingTransformer {
     private final int targetVersion;
 
     private final Map<String, MethodCallReplacer> methodCallReplacers = new HashMap<>();
-    private final Map<String, String> classReplacements = new HashMap<>();
+    private final Map<String, List<String>> classReplacements = new HashMap<>();
 
     public DowngradingTransformer(final int sourceVersion, final int targetVersion) {
         this.sourceVersion = sourceVersion;
@@ -60,11 +58,25 @@ public abstract class DowngradingTransformer {
     }
 
     protected void addClassReplacement(final String name) {
-        this.classReplacements.put(name, Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + name);
+        addClassReplacement(name, Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + name);
+    }
+
+    protected void addClassReplacement(final String name, String[] extraDeps) {
+        for (int i = 0; i < extraDeps.length; i++) {
+            extraDeps[i] = Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + extraDeps[i];
+        }
+        addClassReplacement(name, Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + name, extraDeps);
     }
 
     protected void addClassReplacement(final String oldName, final String newName) {
-        this.classReplacements.put(oldName, newName);
+        this.classReplacements.put(oldName, Collections.singletonList(newName));
+    }
+
+    protected void addClassReplacement(final String oldName, final String newName, String... extraDeps) {
+        final List<String> classes = new ArrayList<>(1 + extraDeps.length);
+        classes.add(newName);
+        Collections.addAll(classes, extraDeps);
+        this.classReplacements.put(oldName, classes);
     }
 
     public void transform(final ClassNode classNode) {
@@ -146,12 +158,12 @@ public abstract class DowngradingTransformer {
             final ClassRemapper classRemapper = new ClassRemapper(remappedNode, new Remapper() {
                 @Override
                 public String map(String internalName) {
-                    final String newName = classReplacements.get(internalName);
-                    if (newName != null) {
-                        depCollector.accept(newName);
-                        return newName;
+                    final List<String> classes = classReplacements.get(internalName);
+                    if (classes == null) {
+                        return internalName;
                     }
-                    return internalName;
+                    classes.forEach(depCollector);
+                    return classes.get(0);
                 }
             });
             classNode.accept(classRemapper);

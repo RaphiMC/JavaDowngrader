@@ -60,7 +60,7 @@ public class Java9ToJava8 extends DowngradingTransformer {
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/regex/Matcher", "appendReplacement", "(Ljava/lang/StringBuilder;Ljava/lang/String;)Ljava/util/regex/Matcher;", new MatcherAppendReplacementMCR());
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/regex/Matcher", "appendTail", "(Ljava/lang/StringBuilder;)Ljava/lang/StringBuilder;", new MatcherAppendTailMCR());
 
-        this.addClassReplacement("java/lang/StackWalker");
+        this.addClassReplacement("java/lang/StackWalker", new String[] {"java/lang/StackWalker$Option"});
         this.addClassReplacement("java/lang/StackWalker$Option");
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getModule", "()Ljava/lang/Module;", new ClassGetModuleMCR());
@@ -77,7 +77,7 @@ public class Java9ToJava8 extends DowngradingTransformer {
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/OptionalDouble", "stream", new OptionalStreamMCR("Double", "D"));
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/lang/Runtime", "version", new RuntimeVersionMCR());
-        this.addClassReplacement("java/lang/Runtime$Version");
+        this.addClassReplacement("java/lang/Runtime$Version", new String[] {"java/lang/Runtime$VersionPattern"});
     }
 
     @Override
