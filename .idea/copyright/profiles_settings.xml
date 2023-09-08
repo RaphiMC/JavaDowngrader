@@ -1,6 +1,7 @@
 <component name="CopyrightManager">
   <settings>
     <module2copyright>
+      <element module="runtime-dep" copyright="MIT" />
       <element module="Project Files" copyright="LGPL-3.0" />
     </module2copyright>
     <LanguageOptions name="__TEMPLATE__">

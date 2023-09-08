@@ -1,0 +1,15 @@
+publishing {
+    publications {
+        maven(MavenPublication) {
+            pom {
+                name = "JavaDowngrader - Runtime Dependency"
+                licenses {
+                    license {
+                        name = "MIT License"
+                        url = "https://github.com/RaphiMC/JavaDowngrader/blob/main/runtime-dep/LICENSE"
+                    }
+                }
+            }
+        }
+    }
+}
