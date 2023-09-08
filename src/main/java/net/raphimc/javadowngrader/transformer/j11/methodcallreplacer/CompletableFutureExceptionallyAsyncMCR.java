@@ -77,7 +77,7 @@ public class CompletableFutureExceptionallyAsyncMCR implements MethodCallReplace
                 Type.getType("(Ljava/lang/Object;Ljava/lang/Throwable;)Ljava/util/concurrent/CompletableFuture;")
         ));
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/concurrent/CompletableFuture", "handle", "(Ljava/util/function/BiFunction;)Ljava/util/concurrent/CompletableFuture;"));
-        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/function/Function", "identity", "()Ljava/util/function/Function;"));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/function/Function", "identity", "()Ljava/util/function/Function;", true));
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/concurrent/CompletableFuture", "thenCompose", "(Ljava/util/function/Function;)Ljava/util/concurrent/CompletableFuture;"));
 
         return replacement;
