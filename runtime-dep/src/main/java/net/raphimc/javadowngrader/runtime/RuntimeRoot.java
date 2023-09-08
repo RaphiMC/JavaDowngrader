@@ -27,6 +27,6 @@ package net.raphimc.javadowngrader.runtime;
 /**
  * This class is used to get the URI of this package.
  */
-@SuppressWarnings("unused")
+@Deprecated
 public class RuntimeRoot {
 }

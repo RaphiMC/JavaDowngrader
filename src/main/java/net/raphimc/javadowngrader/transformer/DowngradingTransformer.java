@@ -17,12 +17,13 @@
  */
 package net.raphimc.javadowngrader.transformer;
 
+import net.raphimc.javadowngrader.RuntimeDepCollector;
 import net.raphimc.javadowngrader.util.Constants;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.commons.SimpleRemapper;
+import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Field;
@@ -67,6 +68,10 @@ public abstract class DowngradingTransformer {
     }
 
     public void transform(final ClassNode classNode) {
+        transform(classNode, RuntimeDepCollector.NULL);
+    }
+
+    public void transform(final ClassNode classNode, final RuntimeDepCollector depCollector) {
         if (classNode.version > this.sourceVersion) {
             throw new IllegalArgumentException("Input class version is higher than supported");
         }
@@ -94,7 +99,9 @@ public abstract class DowngradingTransformer {
                             replacer = this.methodCallReplacers.get(methodInsn.owner + ';' + methodInsn.name);
                         }
                         if (replacer != null) {
-                            methodNode.instructions.insertBefore(methodInsn, replacer.getReplacement(classNode, methodNode, methodInsn.name, methodInsn.desc));
+                            methodNode.instructions.insertBefore(
+                                methodInsn, replacer.getReplacement(classNode, methodNode, methodInsn.name, methodInsn.desc, depCollector)
+                            );
                             methodNode.instructions.remove(methodInsn);
                         }
                     } else if (insn instanceof InvokeDynamicInsnNode) {
@@ -119,7 +126,9 @@ public abstract class DowngradingTransformer {
                                     for (int i1 = 0; i1 < argumentTypes.length; i1++) {
                                         bridgeMethod.instructions.add(new VarInsnNode(argumentTypes[i1].getOpcode(Opcodes.ILOAD), i1));
                                     }
-                                    bridgeMethod.instructions.add(replacer.getReplacement(classNode, bridgeMethod, handle.getName(), handle.getDesc()));
+                                    bridgeMethod.instructions.add(replacer.getReplacement(
+                                        classNode, bridgeMethod, handle.getName(), handle.getDesc(), depCollector
+                                    ));
                                     bridgeMethod.instructions.add(new InsnNode(Type.getReturnType(handle.getDesc()).getOpcode(Opcodes.IRETURN)));
                                     classNode.methods.add(bridgeMethod);
 
@@ -134,7 +143,17 @@ public abstract class DowngradingTransformer {
 
         if (!this.classReplacements.isEmpty()) {
             final ClassNode remappedNode = new ClassNode();
-            final ClassRemapper classRemapper = new ClassRemapper(remappedNode, new SimpleRemapper(this.classReplacements));
+            final ClassRemapper classRemapper = new ClassRemapper(remappedNode, new Remapper() {
+                @Override
+                public String map(String internalName) {
+                    final String newName = classReplacements.get(internalName);
+                    if (newName != null) {
+                        depCollector.accept(newName);
+                        return newName;
+                    }
+                    return internalName;
+                }
+            });
             classNode.accept(classRemapper);
 
             // Modify the class inplace

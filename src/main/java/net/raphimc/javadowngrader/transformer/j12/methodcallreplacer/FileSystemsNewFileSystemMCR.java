@@ -17,6 +17,7 @@
  */
 package net.raphimc.javadowngrader.transformer.j12.methodcallreplacer;
 
+import net.raphimc.javadowngrader.RuntimeDepCollector;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import net.raphimc.javadowngrader.transformer.j12.FileSystemsNewFileSystemCreator;
 import org.objectweb.asm.Opcodes;
@@ -33,7 +34,7 @@ public class FileSystemsNewFileSystemMCR implements MethodCallReplacer {
     }
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
         FileSystemsNewFileSystemCreator.ensureHasMethod(classNode);
 
         final InsnList replacement = new InsnList();

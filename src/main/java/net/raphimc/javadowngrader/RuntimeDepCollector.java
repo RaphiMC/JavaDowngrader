@@ -15,15 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.transformer;
+package net.raphimc.javadowngrader;
 
-import net.raphimc.javadowngrader.RuntimeDepCollector;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.MethodNode;
+import java.util.function.Consumer;
 
-public interface MethodCallReplacer {
-
-    InsnList getReplacement(final ClassNode classNode, final MethodNode method, String originalName, final String originalDesc, final RuntimeDepCollector depCollector);
-
+/**
+ * This is called with the internal name of a class to include as a runtime dependency.
+ */
+@FunctionalInterface
+public interface RuntimeDepCollector extends Consumer<String> {
+    RuntimeDepCollector NULL = c -> {};
 }

@@ -61,11 +61,26 @@ public class JavaDowngrader {
      *
      * @param classNode     The class to downgrade
      * @param targetVersion The target Java version
+     * @see ClassNode
      */
     public static void downgrade(final ClassNode classNode, final int targetVersion) {
+        downgrade(classNode, targetVersion, RuntimeDepCollector.NULL);
+    }
+
+    /**
+     * Downgrades the given class to the target version
+     *
+     * @param classNode     The class to downgrade
+     * @param targetVersion The target Java version
+     * @param depCollector  The {@link RuntimeDepCollector} to use to collect runtime dependencies. Check the javadoc
+     *                      of {@link RuntimeDepCollector} for more info.
+     * @see ClassNode
+     * @see RuntimeDepCollector
+     */
+    public static void downgrade(final ClassNode classNode, final int targetVersion, final RuntimeDepCollector depCollector) {
         for (DowngradingTransformer transformer : TRANSFORMER) {
             if (transformer.getTargetVersion() >= targetVersion && classNode.version > transformer.getTargetVersion()) {
-                transformer.transform(classNode);
+                transformer.transform(classNode, depCollector);
             }
         }
     }

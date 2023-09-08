@@ -17,6 +17,7 @@
  */
 package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
 
+import net.raphimc.javadowngrader.RuntimeDepCollector;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import net.raphimc.javadowngrader.transformer.j8.InputStreamTransferToCreator;
 import org.objectweb.asm.Opcodes;
@@ -31,7 +32,7 @@ import static net.raphimc.javadowngrader.transformer.j8.InputStreamTransferToCre
 public class InputStreamTransferToMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
         InputStreamTransferToCreator.ensureHasMethod(classNode);
 
         final InsnList replacement = new InsnList();

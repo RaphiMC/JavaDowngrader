@@ -17,6 +17,7 @@
  */
 package net.raphimc.javadowngrader.transformer.j11.methodcallreplacer;
 
+import net.raphimc.javadowngrader.RuntimeDepCollector;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import net.raphimc.javadowngrader.util.ASMUtil;
 import net.raphimc.javadowngrader.util.Constants;
@@ -36,7 +37,7 @@ public class CompletableFutureExceptionallyAsyncMCR implements MethodCallReplace
     private static final String handleAsyncBiFunctionDescriptor = "(Ljava/util/function/Function;Ljava/lang/Object;Ljava/lang/Throwable;)Ljava/lang/Object;";
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
         boolean isInterface = Modifier.isInterface(classNode.access);
         MethodNode handleBiFunctionBody = this.makeHandleBiFunctionBody(classNode, isInterface);
         MethodNode handleAsyncBiFunctionBody = this.makeHandleAsyncBiFunctionBody();

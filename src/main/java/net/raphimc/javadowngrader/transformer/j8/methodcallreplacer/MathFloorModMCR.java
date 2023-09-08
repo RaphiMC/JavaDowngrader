@@ -17,6 +17,7 @@
  */
 package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
 
+import net.raphimc.javadowngrader.RuntimeDepCollector;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
@@ -24,7 +25,7 @@ import org.objectweb.asm.tree.*;
 public class MathFloorModMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
         final InsnList replacement = new InsnList();
 
         // long1 long2 int
