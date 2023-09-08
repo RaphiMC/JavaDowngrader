@@ -93,7 +93,7 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
         }
     }
 
-    public Builder builder(TransformerManager transformerManager) {
+    public static Builder builder(TransformerManager transformerManager) {
         return new Builder(transformerManager);
     }
 
