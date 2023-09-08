@@ -23,9 +23,7 @@ import net.raphimc.javadowngrader.impl.classtransform.JavaDowngraderTransformer;
 import net.raphimc.javadowngrader.impl.classtransform.classprovider.LazyFileClassProvider;
 import net.raphimc.javadowngrader.impl.classtransform.classprovider.PathClassProvider;
 import net.raphimc.javadowngrader.impl.classtransform.util.ClassNameUtil;
-import net.raphimc.javadowngrader.impl.classtransform.util.FileSystemUtil;
 import net.raphimc.javadowngrader.runtime.RuntimeRoot;
-import net.raphimc.javadowngrader.util.Constants;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SourceSet;
@@ -34,11 +32,12 @@ import org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.net.URISyntaxException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -54,19 +53,24 @@ public class DowngradeSourceSetTask extends DefaultTask {
     private boolean copyRuntimeClasses = true;
 
     @TaskAction
-    public void run() throws IOException, URISyntaxException {
+    public void run() throws IOException {
         Objects.requireNonNull(this.sourceSet, "sourceSet must be set");
 
         for (File classesDir : this.sourceSet.getOutput().getClassesDirs()) {
             System.out.println("Downgrading source set: " + this.getProject().getProjectDir().toPath().relativize(classesDir.toPath()));
-
             final Path inRoot = classesDir.toPath();
+
+            final Collection<String> runtimeDeps = new HashSet<>();
             final TransformerManager transformerManager = new TransformerManager(
                     new PathClassProvider(inRoot, new LazyFileClassProvider(this.sourceSet.getCompileClasspath().getFiles(), new BasicClassProvider()))
             );
-            transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(
-                    transformerManager, this.targetVersion, c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c)))
-            ));
+            transformerManager.addBytecodeTransformer(
+                JavaDowngraderTransformer.builder(transformerManager)
+                    .targetVersion(targetVersion)
+                    .classFilter(c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c))))
+                    .depCollector(runtimeDeps::add)
+                    .build()
+            );
 
             // Downgrade classes
             try (Stream<Path> stream = Files.walk(inRoot)) {
@@ -93,21 +97,16 @@ public class DowngradeSourceSetTask extends DefaultTask {
 
             // Copy runtime classes
             if (this.copyRuntimeClasses) {
-                try (FileSystem runtimeRootFs = FileSystemUtil.getOrCreateFileSystem(RuntimeRoot.class.getResource("").toURI())) {
-                    final Path runtimeRoot = runtimeRootFs.getPath(Constants.JAVADOWNGRADER_RUNTIME_PACKAGE);
-                    try (Stream<Path> stream = Files.walk(runtimeRoot)) {
-                        stream.filter(Files::isRegularFile)
-                                .filter(p -> !p.getFileName().toString().equals(Constants.JAVADOWNGRADER_RUNTIME_ROOT))
-                                .forEach(path -> {
-                                    final String relative = ClassNameUtil.slashName(runtimeRoot.relativize(path));
-                                    final Path dest = inRoot.resolve(Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + relative);
-                                    try {
-                                        Files.createDirectories(dest.getParent());
-                                        Files.copy(path, dest);
-                                    } catch (IOException e) {
-                                        throw new UncheckedIOException(e);
-                                    }
-                                });
+                for (final String runtimeDep : runtimeDeps) {
+                    final String classPath = runtimeDep.concat(".class");
+                    try (InputStream is = RuntimeRoot.class.getResourceAsStream("/" + classPath)) {
+                        if (is == null) continue;
+                        final Path dest = inRoot.resolve(classPath);
+                        final Path parent = dest.getParent();
+                        if (parent != null) {
+                            Files.createDirectories(parent);
+                        }
+                        Files.copy(is, dest);
                     }
                 }
             }
