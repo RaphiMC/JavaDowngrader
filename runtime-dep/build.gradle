@@ -3,6 +3,7 @@ publishing {
         maven(MavenPublication) {
             pom {
                 name = "JavaDowngrader - Runtime Dependency"
+                licenses.clear()
                 licenses {
                     license {
                         name = "MIT License"
