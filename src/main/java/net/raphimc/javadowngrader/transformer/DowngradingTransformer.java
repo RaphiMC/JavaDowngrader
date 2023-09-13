@@ -83,15 +83,16 @@ public abstract class DowngradingTransformer {
         transform(classNode, RuntimeDepCollector.NULL);
     }
 
-    public void transform(final ClassNode classNode, final RuntimeDepCollector depCollector) {
+    public DowngradeResult transform(final ClassNode classNode, final RuntimeDepCollector depCollector) {
+        DowngradeResult result = new DowngradeResult();
         if ((classNode.version & 0xFF) > this.sourceVersion) {
             throw new IllegalArgumentException("Input class version is higher than supported");
         }
         if ((classNode.version & 0xFF) <= this.targetVersion) {
-            return;
+            return result;
         }
 
-        this.preTransform(classNode);
+        this.preTransform(classNode, result);
 
         int bridge = 100;
         for (final MethodNode methodNode : classNode.methods) {
@@ -112,9 +113,11 @@ public abstract class DowngradingTransformer {
                         }
                         if (replacer != null) {
                             methodNode.instructions.insertBefore(
-                                methodInsn, replacer.getReplacement(classNode, methodNode, methodInsn.name, methodInsn.desc, depCollector)
+                                    methodInsn, replacer.getReplacement(classNode, methodNode, methodInsn.name, methodInsn.desc, depCollector, result)
                             );
                             methodNode.instructions.remove(methodInsn);
+
+                            result.incrementTransformerCount();
                         }
                     } else if (insn instanceof InvokeDynamicInsnNode) {
                         final InvokeDynamicInsnNode invokeDynamicInsn = (InvokeDynamicInsnNode) insn;
@@ -131,20 +134,21 @@ public abstract class DowngradingTransformer {
                                 }
                                 if (replacer != null) {
                                     final String desc = handle.getTag() == Opcodes.H_INVOKESTATIC || handle.getTag() == Opcodes.H_GETSTATIC || handle.getTag() == Opcodes.H_PUTSTATIC
-                                        ? handle.getDesc()
-                                        : "(L" + handle.getOwner() + ';' + handle.getDesc().substring(1);
+                                            ? handle.getDesc()
+                                            : "(L" + handle.getOwner() + ';' + handle.getDesc().substring(1);
                                     final MethodNode bridgeMethod = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC, BRIDGE_PREFIX + (bridge++), desc, null, null);
                                     final Type[] argumentTypes = Type.getArgumentTypes(desc);
                                     for (int i1 = 0; i1 < argumentTypes.length; i1++) {
                                         bridgeMethod.instructions.add(new VarInsnNode(argumentTypes[i1].getOpcode(Opcodes.ILOAD), i1));
                                     }
                                     bridgeMethod.instructions.add(replacer.getReplacement(
-                                        classNode, bridgeMethod, handle.getName(), handle.getDesc(), depCollector
+                                            classNode, bridgeMethod, handle.getName(), handle.getDesc(), depCollector, result
                                     ));
                                     bridgeMethod.instructions.add(new InsnNode(Type.getReturnType(handle.getDesc()).getOpcode(Opcodes.IRETURN)));
                                     classNode.methods.add(bridgeMethod);
 
                                     invokeDynamicInsn.bsmArgs[i] = new Handle(Opcodes.H_INVOKESTATIC, classNode.name, bridgeMethod.name, bridgeMethod.desc, (classNode.access & Opcodes.ACC_INTERFACE) != 0);
+                                    result.incrementTransformerCount();
                                 }
                             }
                         }
@@ -182,15 +186,16 @@ public abstract class DowngradingTransformer {
             }
         }
 
-        this.postTransform(classNode);
+        this.postTransform(classNode, result);
 
         classNode.version = this.targetVersion;
+        return result;
     }
 
-    protected void preTransform(final ClassNode classNode) {
+    protected void preTransform(final ClassNode classNode, final DowngradeResult result) {
     }
 
-    protected void postTransform(final ClassNode classNode) {
+    protected void postTransform(final ClassNode classNode, final DowngradeResult result) {
     }
 
     public int getSourceVersion() {

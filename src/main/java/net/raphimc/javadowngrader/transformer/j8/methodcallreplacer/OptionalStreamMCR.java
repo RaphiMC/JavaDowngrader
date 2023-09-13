@@ -18,11 +18,13 @@
 package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
 
 import net.raphimc.javadowngrader.RuntimeDepCollector;
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 public class OptionalStreamMCR implements MethodCallReplacer {
+
     private final String streamType, optionalType, valueDescriptor;
 
     public OptionalStreamMCR(String baseType, String valueDescriptor) {
@@ -32,7 +34,7 @@ public class OptionalStreamMCR implements MethodCallReplacer {
     }
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector, DowngradeResult result) {
         final InsnList replacement = new InsnList();
 
         final LabelNode elseStart = new LabelNode();
@@ -50,11 +52,11 @@ public class OptionalStreamMCR implements MethodCallReplacer {
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, optionalType, "get", "()" + valueDescriptor));
         // Object
         replacement.add(new MethodInsnNode(
-            Opcodes.INVOKESTATIC,
-            streamType,
-            "of",
-            '(' + valueDescriptor + ")L" + streamType + ';',
-            true
+                Opcodes.INVOKESTATIC,
+                streamType,
+                "of",
+                '(' + valueDescriptor + ")L" + streamType + ';',
+                true
         ));
         // Stream
         replacement.add(new JumpInsnNode(Opcodes.GOTO, elseEnd));
@@ -64,17 +66,19 @@ public class OptionalStreamMCR implements MethodCallReplacer {
         replacement.add(new InsnNode(Opcodes.POP));
         //
         replacement.add(new MethodInsnNode(
-            Opcodes.INVOKESTATIC,
-            streamType,
-            "empty",
-            "()L" + streamType + ";",
-            true
+                Opcodes.INVOKESTATIC,
+                streamType,
+                "empty",
+                "()L" + streamType + ";",
+                true
         ));
         // Stream
 
         replacement.add(elseEnd);
         // Stream
 
+        result.setRequiresStackMapFrames();
         return replacement;
     }
+
 }

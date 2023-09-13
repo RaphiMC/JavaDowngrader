@@ -18,6 +18,7 @@
 package net.raphimc.javadowngrader.transformer.j16.methodcallreplacer;
 
 import net.raphimc.javadowngrader.RuntimeDepCollector;
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import net.raphimc.javadowngrader.transformer.j16.RandomSupportBoundedNextLongCreator;
 import net.raphimc.javadowngrader.transformer.j16.RandomSupportCheckBoundCreator;
@@ -30,12 +31,18 @@ import static net.raphimc.javadowngrader.transformer.j16.RandomSupportCheckBound
 import static net.raphimc.javadowngrader.transformer.j16.RandomSupportCheckBoundCreator.CHECKBOUND_NAME;
 
 public class RandomGeneratorNextLongMCR implements MethodCallReplacer {
+
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector, DowngradeResult result) {
         final InsnList replacement = new InsnList();
 
-        RandomSupportCheckBoundCreator.ensureHasMethod(classNode);
-        RandomSupportBoundedNextLongCreator.ensureHasMethod(classNode);
+        if (RandomSupportCheckBoundCreator.ensureHasMethod(classNode)) {
+            result.setRequiresStackMapFrames();
+        }
+        if (RandomSupportBoundedNextLongCreator.ensureHasMethod(classNode)) {
+            result.setRequiresStackMapFrames();
+        }
+
 
         // Random long1 long2
         replacement.add(new InsnNode(Opcodes.DUP2));
@@ -47,4 +54,5 @@ public class RandomGeneratorNextLongMCR implements MethodCallReplacer {
 
         return replacement;
     }
+
 }

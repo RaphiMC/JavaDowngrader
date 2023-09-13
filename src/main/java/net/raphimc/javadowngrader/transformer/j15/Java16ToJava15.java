@@ -17,6 +17,7 @@
  */
 package net.raphimc.javadowngrader.transformer.j15;
 
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
 import net.raphimc.javadowngrader.transformer.j15.methodcallreplacer.StreamToListMCR;
 import org.objectweb.asm.Opcodes;
@@ -33,8 +34,10 @@ public class Java16ToJava15 extends DowngradingTransformer {
     }
 
     @Override
-    protected void preTransform(ClassNode classNode) {
-        RecordReplacer.replace(classNode);
+    protected void preTransform(ClassNode classNode, DowngradeResult result) {
+        if (RecordReplacer.replace(classNode)) {
+            result.setRequiresStackMapFrames();
+        }
     }
 
 }

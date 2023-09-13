@@ -17,13 +17,25 @@
  */
 package net.raphimc.javadowngrader.transformer;
 
-import net.raphimc.javadowngrader.RuntimeDepCollector;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.MethodNode;
+public class DowngradeResult {
 
-public interface MethodCallReplacer {
+    private int transformerCount;
+    private boolean requiresStackMapFrames;
 
-    InsnList getReplacement(final ClassNode classNode, final MethodNode method, String originalName, final String originalDesc, final RuntimeDepCollector depCollector, final DowngradeResult result);
+    public int getTransformerCount() {
+        return this.transformerCount;
+    }
+
+    public void incrementTransformerCount() {
+        this.transformerCount++;
+    }
+
+    public boolean requiresStackMapFrames() {
+        return this.requiresStackMapFrames;
+    }
+
+    public void setRequiresStackMapFrames() {
+        this.requiresStackMapFrames = true;
+    }
 
 }

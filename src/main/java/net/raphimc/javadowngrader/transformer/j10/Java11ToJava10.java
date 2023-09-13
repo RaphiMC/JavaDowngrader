@@ -17,6 +17,7 @@
  */
 package net.raphimc.javadowngrader.transformer.j10;
 
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
 import net.raphimc.javadowngrader.transformer.j10.methodcallreplacer.*;
 import org.objectweb.asm.Opcodes;
@@ -49,7 +50,7 @@ public class Java11ToJava10 extends DowngradingTransformer {
     }
 
     @Override
-    protected void preTransform(ClassNode classNode) {
+    protected void preTransform(ClassNode classNode, DowngradeResult result) {
         this.makePackagePrivate(classNode);
     }
 

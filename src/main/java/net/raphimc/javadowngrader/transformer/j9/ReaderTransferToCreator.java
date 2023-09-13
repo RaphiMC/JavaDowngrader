@@ -28,8 +28,8 @@ public class ReaderTransferToCreator {
     public static final String TRANSFERTO_NAME = "javadowngrader-transferTo";
     public static final String TRANSFERTO_DESC = "(Ljava/io/Reader;Ljava/io/Writer;)J";
 
-    public static void ensureHasMethod(final ClassNode classNode) {
-        if (ASMUtil.hasMethod(classNode, TRANSFERTO_NAME, TRANSFERTO_DESC)) return;
+    public static boolean ensureHasMethod(final ClassNode classNode) {
+        if (ASMUtil.hasMethod(classNode, TRANSFERTO_NAME, TRANSFERTO_DESC)) return false;
 
         final MethodVisitor transferTo = classNode.visitMethod(
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC,
@@ -106,6 +106,7 @@ public class ReaderTransferToCreator {
         transferTo.visitInsn(Opcodes.LRETURN);
 
         transferTo.visitEnd();
+        return true;
     }
 
 }

@@ -25,15 +25,16 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
 public class FileSystemsNewFileSystemCreator {
+
     public static final String NEWFILESYSTEM_NAME = "javadowngrader-newFileSystem";
     public static final String NEWFILESYSTEM_DESC = "(Ljava/nio/file/Path;Ljava/util/Map;Ljava/lang/ClassLoader;)Ljava/nio/file/FileSystem;";
 
-    public static void ensureHasMethod(final ClassNode classNode) {
-        if (ASMUtil.hasMethod(classNode, NEWFILESYSTEM_NAME, NEWFILESYSTEM_DESC)) return;
+    public static boolean ensureHasMethod(final ClassNode classNode) {
+        if (ASMUtil.hasMethod(classNode, NEWFILESYSTEM_NAME, NEWFILESYSTEM_DESC)) return false;
 
         final MethodVisitor newFileSystem = classNode.visitMethod(
-            Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC,
-            NEWFILESYSTEM_NAME, NEWFILESYSTEM_DESC, null, new String[] {"java/io/IOException"}
+                Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC,
+                NEWFILESYSTEM_NAME, NEWFILESYSTEM_DESC, null, new String[]{"java/io/IOException"}
         );
         newFileSystem.visitCode();
 
@@ -46,11 +47,11 @@ public class FileSystemsNewFileSystemCreator {
         newFileSystem.visitTypeInsn(Opcodes.NEW, "java/lang/NullPointerException");
         newFileSystem.visitInsn(Opcodes.DUP);
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKESPECIAL,
-            "java/lang/NullPointerException",
-            "<init>",
-            "()V",
-            false
+                Opcodes.INVOKESPECIAL,
+                "java/lang/NullPointerException",
+                "<init>",
+                "()V",
+                false
         );
         newFileSystem.visitInsn(Opcodes.ATHROW);
 
@@ -58,39 +59,39 @@ public class FileSystemsNewFileSystemCreator {
 
         // for (FileSystemProvider provider: FileSystemProvider.installedProviders()) {
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKESTATIC,
-            "java/nio/file/spi/FileSystemProvider",
-            "installedProviders",
-            "()Ljava/util/List;",
-            false
+                Opcodes.INVOKESTATIC,
+                "java/nio/file/spi/FileSystemProvider",
+                "installedProviders",
+                "()Ljava/util/List;",
+                false
         );
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKEINTERFACE,
-            "java/util/List",
-            "iterator",
-            "()Ljava/util/Iterator;",
-            true
+                Opcodes.INVOKEINTERFACE,
+                "java/util/List",
+                "iterator",
+                "()Ljava/util/Iterator;",
+                true
         );
         newFileSystem.visitVarInsn(Opcodes.ASTORE, 3);
         final Label for1StartLabel = new Label();
         newFileSystem.visitLabel(for1StartLabel);
         newFileSystem.visitVarInsn(Opcodes.ALOAD, 3);
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKEINTERFACE,
-            "java/util/Iterator",
-            "hasNext",
-            "()Z",
-            true
+                Opcodes.INVOKEINTERFACE,
+                "java/util/Iterator",
+                "hasNext",
+                "()Z",
+                true
         );
         final Label for1EndLabel = new Label();
         newFileSystem.visitJumpInsn(Opcodes.IFEQ, for1EndLabel);
         newFileSystem.visitVarInsn(Opcodes.ALOAD, 3);
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKEINTERFACE,
-            "java/util/Iterator",
-            "next",
-            "()Ljava/lang/Object;",
-            true
+                Opcodes.INVOKEINTERFACE,
+                "java/util/Iterator",
+                "next",
+                "()Ljava/lang/Object;",
+                true
         );
         newFileSystem.visitTypeInsn(Opcodes.CHECKCAST, "java/nio/file/spi/FileSystemProvider");
         newFileSystem.visitVarInsn(Opcodes.ASTORE, 4);
@@ -107,11 +108,11 @@ public class FileSystemsNewFileSystemCreator {
         newFileSystem.visitVarInsn(Opcodes.ALOAD, 0);
         newFileSystem.visitVarInsn(Opcodes.ALOAD, 1);
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKEVIRTUAL,
-            "java/nio/file/spi/FileSystemProvider",
-            "newFileSystem",
-            "(Ljava/nio/file/Path;Ljava/util/Map;)Ljava/nio/file/FileSystem;",
-            false
+                Opcodes.INVOKEVIRTUAL,
+                "java/nio/file/spi/FileSystemProvider",
+                "newFileSystem",
+                "(Ljava/nio/file/Path;Ljava/util/Map;)Ljava/nio/file/FileSystem;",
+                false
         );
         newFileSystem.visitInsn(Opcodes.ARETURN);
 
@@ -135,43 +136,43 @@ public class FileSystemsNewFileSystemCreator {
         newFileSystem.visitLdcInsn(Type.getObjectType("java/nio/file/spi/FileSystemProvider"));
         newFileSystem.visitVarInsn(Opcodes.ALOAD, 2);
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKESTATIC,
-            "java/util/ServiceLoader",
-            "load",
-            "(Ljava/lang/Class;Ljava/lang/ClassLoader;)Ljava/util/ServiceLoader;",
-            false
+                Opcodes.INVOKESTATIC,
+                "java/util/ServiceLoader",
+                "load",
+                "(Ljava/lang/Class;Ljava/lang/ClassLoader;)Ljava/util/ServiceLoader;",
+                false
         );
         newFileSystem.visitVarInsn(Opcodes.ASTORE, 3);
 
         // for (FileSystemProvider provider: sl) {
         newFileSystem.visitVarInsn(Opcodes.ALOAD, 3);
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKEINTERFACE,
-            "java/util/ServiceLoader",
-            "iterator",
-            "()Ljava/util/Iterator;",
-            true
+                Opcodes.INVOKEINTERFACE,
+                "java/util/ServiceLoader",
+                "iterator",
+                "()Ljava/util/Iterator;",
+                true
         );
         newFileSystem.visitVarInsn(Opcodes.ASTORE, 4);
         final Label for2StartLabel = new Label();
         newFileSystem.visitLabel(for2StartLabel);
         newFileSystem.visitVarInsn(Opcodes.ALOAD, 4);
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKEINTERFACE,
-            "java/util/Iterator",
-            "hasNext",
-            "()Z",
-            true
+                Opcodes.INVOKEINTERFACE,
+                "java/util/Iterator",
+                "hasNext",
+                "()Z",
+                true
         );
         final Label for2EndLabel = new Label();
         newFileSystem.visitJumpInsn(Opcodes.IFEQ, for2EndLabel);
         newFileSystem.visitVarInsn(Opcodes.ALOAD, 4);
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKEINTERFACE,
-            "java/util/Iterator",
-            "next",
-            "()Ljava/lang/Object;",
-            true
+                Opcodes.INVOKEINTERFACE,
+                "java/util/Iterator",
+                "next",
+                "()Ljava/lang/Object;",
+                true
         );
         newFileSystem.visitTypeInsn(Opcodes.CHECKCAST, "java/nio/file/spi/FileSystemProvider");
         newFileSystem.visitVarInsn(Opcodes.ASTORE, 5);
@@ -188,11 +189,11 @@ public class FileSystemsNewFileSystemCreator {
         newFileSystem.visitVarInsn(Opcodes.ALOAD, 0);
         newFileSystem.visitVarInsn(Opcodes.ALOAD, 1);
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKEVIRTUAL,
-            "java/nio/file/spi/FileSystemProvider",
-            "newFileSystem",
-            "(Ljava/nio/file/Path;Ljava/util/Map;)Ljava/nio/file/FileSystem;",
-            false
+                Opcodes.INVOKEVIRTUAL,
+                "java/nio/file/spi/FileSystemProvider",
+                "newFileSystem",
+                "(Ljava/nio/file/Path;Ljava/util/Map;)Ljava/nio/file/FileSystem;",
+                false
         );
         newFileSystem.visitInsn(Opcodes.ARETURN);
 
@@ -215,14 +216,16 @@ public class FileSystemsNewFileSystemCreator {
         newFileSystem.visitInsn(Opcodes.DUP);
         newFileSystem.visitLdcInsn("Provider not found");
         newFileSystem.visitMethodInsn(
-            Opcodes.INVOKESPECIAL,
-            "java/nio/file/ProviderNotFoundException",
-            "<init>",
-            "(Ljava/lang/String;)V",
-            false
+                Opcodes.INVOKESPECIAL,
+                "java/nio/file/ProviderNotFoundException",
+                "<init>",
+                "(Ljava/lang/String;)V",
+                false
         );
         newFileSystem.visitInsn(Opcodes.ATHROW);
 
         newFileSystem.visitEnd();
+        return true;
     }
+
 }
