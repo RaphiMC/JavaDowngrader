@@ -39,7 +39,7 @@ public class LazyFileClassProvider extends AbstractClassProvider implements Auto
     }
 
     @Override
-    public byte[] getClass(String name) {
+    public byte[] getClass(String name) throws ClassNotFoundException {
         for (int i = 0; i < this.path.length; i++) {
             Object element = this.path[i];
             if (element instanceof File) {
@@ -51,7 +51,7 @@ public class LazyFileClassProvider extends AbstractClassProvider implements Auto
             }
             try {
                 return ((PathClassProvider) element).getClass(name);
-            } catch (NoSuchElementException ignored) {
+            } catch (ClassNotFoundException ignored) {
             }
         }
         return super.getClass(name);
