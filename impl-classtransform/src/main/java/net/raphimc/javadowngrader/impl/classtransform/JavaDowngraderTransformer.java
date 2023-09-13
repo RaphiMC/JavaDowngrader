@@ -24,7 +24,6 @@ import net.raphimc.javadowngrader.JavaDowngrader;
 import net.raphimc.javadowngrader.RuntimeDepCollector;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.nio.ByteBuffer;
 import java.util.function.Predicate;
 
 public class JavaDowngraderTransformer implements IBytecodeTransformer {
@@ -76,7 +75,8 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
 
     @Override
     public byte[] transform(String className, byte[] bytecode, boolean calculateStackMapFrames) {
-        if (ByteBuffer.wrap(bytecode, 4, 4).getInt() <= this.targetVersion) {
+        final int majorVersion = (bytecode[6] & 0xFF) << 8 | (bytecode[7] & 0xFF);
+        if (majorVersion <= this.targetVersion) {
             return null;
         }
         if (!this.classFilter.test(className)) {
@@ -84,7 +84,7 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
         }
 
         final ClassNode classNode = ASMUtils.fromBytes(bytecode);
-        JavaDowngrader.downgrade(classNode, this.targetVersion, depCollector);
+        JavaDowngrader.downgrade(classNode, this.targetVersion, this.depCollector);
 
         if (calculateStackMapFrames) {
             return ASMUtils.toBytes(classNode, this.transformerManager.getClassTree(), this.transformerManager.getClassProvider());

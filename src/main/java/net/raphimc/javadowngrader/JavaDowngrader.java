@@ -79,7 +79,7 @@ public class JavaDowngrader {
      */
     public static void downgrade(final ClassNode classNode, final int targetVersion, final RuntimeDepCollector depCollector) {
         for (DowngradingTransformer transformer : TRANSFORMER) {
-            if (transformer.getTargetVersion() >= targetVersion && classNode.version > transformer.getTargetVersion()) {
+            if (transformer.getTargetVersion() >= targetVersion && (classNode.version & 0xFF) > transformer.getTargetVersion()) {
                 transformer.transform(classNode, depCollector);
             }
         }

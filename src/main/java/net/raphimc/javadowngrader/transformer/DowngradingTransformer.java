@@ -84,10 +84,10 @@ public abstract class DowngradingTransformer {
     }
 
     public void transform(final ClassNode classNode, final RuntimeDepCollector depCollector) {
-        if (classNode.version > this.sourceVersion) {
+        if ((classNode.version & 0xFF) > this.sourceVersion) {
             throw new IllegalArgumentException("Input class version is higher than supported");
         }
-        if (classNode.version <= this.targetVersion) {
+        if ((classNode.version & 0xFF) <= this.targetVersion) {
             return;
         }
 
