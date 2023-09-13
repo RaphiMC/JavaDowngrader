@@ -79,17 +79,16 @@ public abstract class DowngradingTransformer {
         this.classReplacements.put(oldName, classes);
     }
 
-    public void transform(final ClassNode classNode) {
-        transform(classNode, RuntimeDepCollector.NULL);
+    public void transform(final ClassNode classNode, final DowngradeResult result) {
+        transform(classNode, RuntimeDepCollector.NULL, result);
     }
 
-    public DowngradeResult transform(final ClassNode classNode, final RuntimeDepCollector depCollector) {
-        DowngradeResult result = new DowngradeResult();
+    public void transform(final ClassNode classNode, final RuntimeDepCollector depCollector, final DowngradeResult result) {
         if ((classNode.version & 0xFF) > this.sourceVersion) {
             throw new IllegalArgumentException("Input class version is higher than supported");
         }
         if ((classNode.version & 0xFF) <= this.targetVersion) {
-            return result;
+            return;
         }
 
         this.preTransform(classNode, result);
@@ -166,6 +165,7 @@ public abstract class DowngradingTransformer {
                     if (classes == null) {
                         return internalName;
                     }
+                    result.setRequiresStackMapFrames();
                     classes.forEach(depCollector);
                     return classes.get(0);
                 }
@@ -189,7 +189,6 @@ public abstract class DowngradingTransformer {
         this.postTransform(classNode, result);
 
         classNode.version = this.targetVersion;
-        return result;
     }
 
     protected void preTransform(final ClassNode classNode, final DowngradeResult result) {
