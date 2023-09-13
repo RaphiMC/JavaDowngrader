@@ -22,20 +22,42 @@ public class DowngradeResult {
     private int transformerCount;
     private boolean requiresStackMapFrames;
 
+    /**
+     * @return The amount of transformers that were applied
+     */
     public int getTransformerCount() {
         return this.transformerCount;
     }
 
+    /**
+     * Increments the transformer count by 1.
+     */
     public void incrementTransformerCount() {
         this.transformerCount++;
     }
 
+    /**
+     * @return If the class requires stack map frame recalculation
+     */
     public boolean requiresStackMapFrames() {
         return this.requiresStackMapFrames;
     }
 
+    /**
+     * Sets the class to require stack map frame recalculation.
+     */
     public void setRequiresStackMapFrames() {
         this.requiresStackMapFrames = true;
+    }
+
+    /**
+     * Adds the values of the given result to this result.
+     *
+     * @param result The result to add
+     */
+    public void add(final DowngradeResult result) {
+        this.transformerCount += result.transformerCount;
+        this.requiresStackMapFrames |= result.requiresStackMapFrames;
     }
 
 }
