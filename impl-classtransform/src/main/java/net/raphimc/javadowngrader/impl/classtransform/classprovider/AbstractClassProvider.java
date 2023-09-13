@@ -33,7 +33,7 @@ public abstract class AbstractClassProvider implements IClassProvider {
     }
 
     @Override
-    public byte[] getClass(String name) {
+    public byte[] getClass(String name) throws ClassNotFoundException {
         if (this.parent == null) {
             throw new NoSuchElementException("Unable to find class '" + name + "'");
         }

@@ -24,13 +24,14 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 public class RandomSupportCheckBoundCreator {
+
     private static final String BAD_BOUND = "bound must be positive";
 
     public static final String CHECKBOUND_NAME = "javadowngrader-checkBound";
     public static final String CHECKBOUND_DESC = "(J)V";
 
-    public static void ensureHasMethod(final ClassNode classNode) {
-        if (ASMUtil.hasMethod(classNode, CHECKBOUND_NAME, CHECKBOUND_DESC)) return;
+    public static boolean ensureHasMethod(final ClassNode classNode) {
+        if (ASMUtil.hasMethod(classNode, CHECKBOUND_NAME, CHECKBOUND_DESC)) return false;
 
         final MethodVisitor checkBound = classNode.visitMethod(
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC,
@@ -50,11 +51,11 @@ public class RandomSupportCheckBoundCreator {
         checkBound.visitInsn(Opcodes.DUP);
         checkBound.visitLdcInsn(BAD_BOUND);
         checkBound.visitMethodInsn(
-            Opcodes.INVOKESPECIAL,
-            "java/lang/IllegalArgumentException",
-            "<init>",
-            "(Ljava/lang/String;)V",
-            false
+                Opcodes.INVOKESPECIAL,
+                "java/lang/IllegalArgumentException",
+                "<init>",
+                "(Ljava/lang/String;)V",
+                false
         );
         checkBound.visitInsn(Opcodes.ATHROW);
 
@@ -65,5 +66,7 @@ public class RandomSupportCheckBoundCreator {
         checkBound.visitInsn(Opcodes.RETURN);
 
         checkBound.visitEnd();
+        return true;
     }
+
 }

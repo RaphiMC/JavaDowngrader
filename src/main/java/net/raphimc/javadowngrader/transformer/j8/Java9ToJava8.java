@@ -17,6 +17,7 @@
  */
 package net.raphimc.javadowngrader.transformer.j8;
 
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
 import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.*;
 import org.objectweb.asm.Opcodes;
@@ -81,7 +82,7 @@ public class Java9ToJava8 extends DowngradingTransformer {
     }
 
     @Override
-    protected void preTransform(ClassNode classNode) {
+    protected void preTransform(ClassNode classNode, DowngradeResult result) {
         StringConcatFactoryReplacer.replace(classNode);
         this.makeInterfaceMethodsPublic(classNode);
     }

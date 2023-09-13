@@ -17,6 +17,7 @@
  */
 package net.raphimc.javadowngrader;
 
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
 import net.raphimc.javadowngrader.transformer.j10.Java11ToJava10;
 import net.raphimc.javadowngrader.transformer.j11.Java12ToJava11;
@@ -61,10 +62,11 @@ public class JavaDowngrader {
      *
      * @param classNode     The class to downgrade
      * @param targetVersion The target Java version
+     * @return The {@link DowngradeResult}
      * @see ClassNode
      */
-    public static void downgrade(final ClassNode classNode, final int targetVersion) {
-        downgrade(classNode, targetVersion, RuntimeDepCollector.NULL);
+    public static DowngradeResult downgrade(final ClassNode classNode, final int targetVersion) {
+        return downgrade(classNode, targetVersion, RuntimeDepCollector.NULL);
     }
 
     /**
@@ -74,15 +76,18 @@ public class JavaDowngrader {
      * @param targetVersion The target Java version
      * @param depCollector  The {@link RuntimeDepCollector} to use to collect runtime dependencies. Check the javadoc
      *                      of {@link RuntimeDepCollector} for more info.
+     * @return The {@link DowngradeResult}
      * @see ClassNode
      * @see RuntimeDepCollector
      */
-    public static void downgrade(final ClassNode classNode, final int targetVersion, final RuntimeDepCollector depCollector) {
+    public static DowngradeResult downgrade(final ClassNode classNode, final int targetVersion, final RuntimeDepCollector depCollector) {
+        final DowngradeResult result = new DowngradeResult();
         for (DowngradingTransformer transformer : TRANSFORMER) {
             if (transformer.getTargetVersion() >= targetVersion && (classNode.version & 0xFF) > transformer.getTargetVersion()) {
-                transformer.transform(classNode, depCollector);
+                transformer.transform(classNode, depCollector, result);
             }
         }
+        return result;
     }
 
 }

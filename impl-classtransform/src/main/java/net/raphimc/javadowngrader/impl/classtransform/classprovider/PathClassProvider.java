@@ -40,7 +40,7 @@ public class PathClassProvider extends AbstractClassProvider {
     }
 
     @Override
-    public byte[] getClass(String name) {
+    public byte[] getClass(String name) throws ClassNotFoundException {
         final Path path = this.root.resolve(ClassNameUtil.toClassFilename(name));
         if (Files.exists(path)) {
             try {

@@ -18,6 +18,7 @@
 package net.raphimc.javadowngrader.transformer.j9.methodcallreplacer;
 
 import net.raphimc.javadowngrader.RuntimeDepCollector;
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
@@ -25,7 +26,7 @@ import org.objectweb.asm.tree.*;
 public class SetCopyOfMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc, RuntimeDepCollector depCollector, DowngradeResult result) {
         final InsnList replacement = new InsnList();
 
         // Collection

@@ -18,6 +18,7 @@
 package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
 
 import net.raphimc.javadowngrader.RuntimeDepCollector;
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import net.raphimc.javadowngrader.util.ASMUtil;
 import org.objectweb.asm.Opcodes;
@@ -27,7 +28,7 @@ import org.objectweb.asm.tree.*;
 public class ListOfMCR implements MethodCallReplacer {
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode methodNode, String originalName, String originalDesc, RuntimeDepCollector depCollector, DowngradeResult result) {
         final InsnList replacement = new InsnList();
 
         final Type[] args = Type.getArgumentTypes(originalDesc);
@@ -36,20 +37,20 @@ public class ListOfMCR implements MethodCallReplacer {
             if (argCount == 0) {
                 //
                 replacement.add(new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    "java/util/Collections",
-                    "emptyList",
-                    "()Ljava/util/List;"
+                        Opcodes.INVOKESTATIC,
+                        "java/util/Collections",
+                        "emptyList",
+                        "()Ljava/util/List;"
                 ));
                 // List
                 return replacement;
             } else if (argCount == 1) {
                 // Object
                 replacement.add(new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    "java/util/Collections",
-                    "singletonList",
-                    "(Ljava/lang/Object;)Ljava/util/List;"
+                        Opcodes.INVOKESTATIC,
+                        "java/util/Collections",
+                        "singletonList",
+                        "(Ljava/lang/Object;)Ljava/util/List;"
                 ));
                 // List
                 return replacement;
@@ -73,10 +74,10 @@ public class ListOfMCR implements MethodCallReplacer {
                 replacement.add(new InsnNode(Opcodes.POP));
                 // Object... ArrayList ArrayList Object
                 replacement.add(new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    "java/util/Objects",
-                    "requireNonNull",
-                    "(Ljava/lang/Object;)Ljava/lang/Object;"
+                        Opcodes.INVOKESTATIC,
+                        "java/util/Objects",
+                        "requireNonNull",
+                        "(Ljava/lang/Object;)Ljava/lang/Object;"
                 ));
                 // Object... ArrayList ArrayList Object
                 replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z"));
@@ -122,10 +123,10 @@ public class ListOfMCR implements MethodCallReplacer {
             replacement.add(new InsnNode(Opcodes.AALOAD));
             // Object[](input) int(i) Object
             replacement.add(new MethodInsnNode(
-                Opcodes.INVOKESTATIC,
-                "java/util/Objects",
-                "requireNonNull",
-                "(Ljava/lang/Object;)Ljava/lang/Object;"
+                    Opcodes.INVOKESTATIC,
+                    "java/util/Objects",
+                    "requireNonNull",
+                    "(Ljava/lang/Object;)Ljava/lang/Object;"
             ));
             // Object[](input) int(i) Object
             replacement.add(new InsnNode(Opcodes.DUP2));
@@ -159,6 +160,7 @@ public class ListOfMCR implements MethodCallReplacer {
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/Collections", "unmodifiableList", "(Ljava/util/List;)Ljava/util/List;"));
         // List
 
+        result.setRequiresStackMapFrames();
         return replacement;
     }
 

@@ -18,6 +18,7 @@
 package net.raphimc.javadowngrader.transformer.j12.methodcallreplacer;
 
 import net.raphimc.javadowngrader.RuntimeDepCollector;
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import net.raphimc.javadowngrader.transformer.j12.FileSystemsNewFileSystemCreator;
 import org.objectweb.asm.Opcodes;
@@ -27,6 +28,7 @@ import static net.raphimc.javadowngrader.transformer.j12.FileSystemsNewFileSyste
 import static net.raphimc.javadowngrader.transformer.j12.FileSystemsNewFileSystemCreator.NEWFILESYSTEM_NAME;
 
 public class FileSystemsNewFileSystemMCR implements MethodCallReplacer {
+
     private final int arity;
 
     public FileSystemsNewFileSystemMCR(int arity) {
@@ -34,8 +36,10 @@ public class FileSystemsNewFileSystemMCR implements MethodCallReplacer {
     }
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
-        FileSystemsNewFileSystemCreator.ensureHasMethod(classNode);
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector, DowngradeResult result) {
+        if (FileSystemsNewFileSystemCreator.ensureHasMethod(classNode)) {
+            result.setRequiresStackMapFrames();
+        }
 
         final InsnList replacement = new InsnList();
         if (arity < 2) {
@@ -47,4 +51,5 @@ public class FileSystemsNewFileSystemMCR implements MethodCallReplacer {
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, classNode.name, NEWFILESYSTEM_NAME, NEWFILESYSTEM_DESC));
         return replacement;
     }
+
 }

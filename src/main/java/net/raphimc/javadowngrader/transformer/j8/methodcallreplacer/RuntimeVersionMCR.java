@@ -18,6 +18,7 @@
 package net.raphimc.javadowngrader.transformer.j8.methodcallreplacer;
 
 import net.raphimc.javadowngrader.RuntimeDepCollector;
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
@@ -27,7 +28,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class RuntimeVersionMCR implements MethodCallReplacer {
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector, DowngradeResult result) {
         depCollector.accept("net/raphimc/javadowngrader/runtime/java/lang/Runtime");
 
         final InsnList replacement = new InsnList();

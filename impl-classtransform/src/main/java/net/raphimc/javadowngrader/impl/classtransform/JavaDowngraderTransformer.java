@@ -22,6 +22,8 @@ import net.lenni0451.classtransform.transformer.IBytecodeTransformer;
 import net.lenni0451.classtransform.utils.ASMUtils;
 import net.raphimc.javadowngrader.JavaDowngrader;
 import net.raphimc.javadowngrader.RuntimeDepCollector;
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.function.Predicate;
@@ -62,10 +64,10 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
     }
 
     JavaDowngraderTransformer(
-        TransformerManager transformerManager,
-        int targetVersion,
-        Predicate<String> classFilter,
-        RuntimeDepCollector depCollector
+            TransformerManager transformerManager,
+            int targetVersion,
+            Predicate<String> classFilter,
+            RuntimeDepCollector depCollector
     ) {
         this.transformerManager = transformerManager;
         this.targetVersion = targetVersion;
@@ -83,11 +85,12 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
             return null;
         }
 
-        final ClassNode classNode = ASMUtils.fromBytes(bytecode);
-        JavaDowngrader.downgrade(classNode, this.targetVersion, this.depCollector);
+        final ClassNode classNode = ASMUtils.fromBytes(bytecode, 0);
+        final DowngradeResult result = JavaDowngrader.downgrade(classNode, this.targetVersion, this.depCollector);
 
         if (calculateStackMapFrames) {
-            return ASMUtils.toBytes(classNode, this.transformerManager.getClassTree(), this.transformerManager.getClassProvider());
+            int flags = result.requiresStackMapFrames() ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
+            return ASMUtils.toBytes(classNode, this.transformerManager.getClassTree(), this.transformerManager.getClassProvider(), flags);
         } else {
             return ASMUtils.toStacklessBytes(classNode);
         }
@@ -124,10 +127,10 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
 
         public JavaDowngraderTransformer build() {
             return new JavaDowngraderTransformer(
-                transformerManager,
-                targetVersion,
-                classFilter,
-                depCollector
+                    transformerManager,
+                    targetVersion,
+                    classFilter,
+                    depCollector
             );
         }
     }

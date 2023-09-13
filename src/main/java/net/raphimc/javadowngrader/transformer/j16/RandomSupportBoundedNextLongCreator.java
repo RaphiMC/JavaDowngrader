@@ -24,15 +24,16 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 public class RandomSupportBoundedNextLongCreator {
+
     public static final String BOUNDEDNEXTLONG_NAME = "javadowngrader-boundedNextLong";
     public static final String BOUNDEDNEXTLONG_DESC = "(Ljava/util/Random;J)J";
 
-    public static void ensureHasMethod(final ClassNode classNode) {
-        if (ASMUtil.hasMethod(classNode, BOUNDEDNEXTLONG_NAME, BOUNDEDNEXTLONG_DESC)) return;
+    public static boolean ensureHasMethod(final ClassNode classNode) {
+        if (ASMUtil.hasMethod(classNode, BOUNDEDNEXTLONG_NAME, BOUNDEDNEXTLONG_DESC)) return false;
 
         final MethodVisitor boundedNextLong = classNode.visitMethod(
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC,
-            BOUNDEDNEXTLONG_NAME, BOUNDEDNEXTLONG_DESC, null, null
+                BOUNDEDNEXTLONG_NAME, BOUNDEDNEXTLONG_DESC, null, null
         );
         boundedNextLong.visitCode();
 
@@ -109,5 +110,7 @@ public class RandomSupportBoundedNextLongCreator {
         boundedNextLong.visitInsn(Opcodes.LRETURN);
 
         boundedNextLong.visitEnd();
+        return true;
     }
+
 }

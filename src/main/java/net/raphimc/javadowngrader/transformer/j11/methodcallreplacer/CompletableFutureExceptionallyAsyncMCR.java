@@ -18,6 +18,7 @@
 package net.raphimc.javadowngrader.transformer.j11.methodcallreplacer;
 
 import net.raphimc.javadowngrader.RuntimeDepCollector;
+import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.MethodCallReplacer;
 import net.raphimc.javadowngrader.util.ASMUtil;
 import net.raphimc.javadowngrader.util.Constants;
@@ -37,7 +38,7 @@ public class CompletableFutureExceptionallyAsyncMCR implements MethodCallReplace
     private static final String handleAsyncBiFunctionDescriptor = "(Ljava/util/function/Function;Ljava/lang/Object;Ljava/lang/Throwable;)Ljava/lang/Object;";
 
     @Override
-    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector) {
+    public InsnList getReplacement(ClassNode classNode, MethodNode method, String originalName, String originalDesc, RuntimeDepCollector depCollector, DowngradeResult result) {
         boolean isInterface = Modifier.isInterface(classNode.access);
         MethodNode handleBiFunctionBody = this.makeHandleBiFunctionBody(classNode, isInterface);
         MethodNode handleAsyncBiFunctionBody = this.makeHandleAsyncBiFunctionBody();
@@ -80,6 +81,7 @@ public class CompletableFutureExceptionallyAsyncMCR implements MethodCallReplace
         replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/util/function/Function", "identity", "()Ljava/util/function/Function;", true));
         replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/concurrent/CompletableFuture", "thenCompose", "(Ljava/util/function/Function;)Ljava/util/concurrent/CompletableFuture;"));
 
+        result.setRequiresStackMapFrames();
         return replacement;
     }
 
