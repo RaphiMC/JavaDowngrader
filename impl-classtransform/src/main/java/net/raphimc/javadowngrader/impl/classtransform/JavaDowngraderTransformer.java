@@ -85,7 +85,7 @@ public class JavaDowngraderTransformer implements IBytecodeTransformer {
             return null;
         }
 
-        final ClassNode classNode = ASMUtils.fromBytes(bytecode);
+        final ClassNode classNode = ASMUtils.fromBytes(bytecode, 0);
         final DowngradeResult result = JavaDowngrader.downgrade(classNode, this.targetVersion, this.depCollector);
 
         if (calculateStackMapFrames) {
