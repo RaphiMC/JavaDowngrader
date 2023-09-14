@@ -21,10 +21,10 @@ import joptsimple.*;
 import me.tongfei.progressbar.ProgressBarBuilder;
 import me.tongfei.progressbar.ProgressBarStyle;
 import net.lenni0451.classtransform.TransformerManager;
+import net.lenni0451.classtransform.additionalclassprovider.LazyFileClassProvider;
+import net.lenni0451.classtransform.additionalclassprovider.PathClassProvider;
 import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
 import net.raphimc.javadowngrader.impl.classtransform.JavaDowngraderTransformer;
-import net.raphimc.javadowngrader.impl.classtransform.classprovider.LazyFileClassProvider;
-import net.raphimc.javadowngrader.impl.classtransform.classprovider.PathClassProvider;
 import net.raphimc.javadowngrader.impl.classtransform.util.ClassNameUtil;
 import net.raphimc.javadowngrader.runtime.RuntimeRoot;
 import net.raphimc.javadowngrader.standalone.progress.MultiThreadedProgressBar;
@@ -181,11 +181,11 @@ public class Main {
                     new PathClassProvider(inRoot, new LazyFileClassProvider(libraryPath, new BasicClassProvider()))
             );
             transformerManager.addBytecodeTransformer(
-                JavaDowngraderTransformer.builder(transformerManager)
-                    .targetVersion(targetVersion.getVersion())
-                    .classFilter(c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c))))
-                    .depCollector(runtimeDeps::add)
-                    .build()
+                    JavaDowngraderTransformer.builder(transformerManager)
+                            .targetVersion(targetVersion.getVersion())
+                            .classFilter(c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c))))
+                            .depCollector(runtimeDeps::add)
+                            .build()
             );
 
             try (FileSystem outFs = FileSystems.newFileSystem(new URI("jar:" + outputFile.toURI()), Collections.singletonMap("create", "true"))) {

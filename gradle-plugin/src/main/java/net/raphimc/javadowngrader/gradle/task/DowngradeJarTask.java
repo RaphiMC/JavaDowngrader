@@ -18,10 +18,10 @@
 package net.raphimc.javadowngrader.gradle.task;
 
 import net.lenni0451.classtransform.TransformerManager;
+import net.lenni0451.classtransform.additionalclassprovider.LazyFileClassProvider;
+import net.lenni0451.classtransform.additionalclassprovider.PathClassProvider;
 import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
 import net.raphimc.javadowngrader.impl.classtransform.JavaDowngraderTransformer;
-import net.raphimc.javadowngrader.impl.classtransform.classprovider.LazyFileClassProvider;
-import net.raphimc.javadowngrader.impl.classtransform.classprovider.PathClassProvider;
 import net.raphimc.javadowngrader.impl.classtransform.util.ClassNameUtil;
 import net.raphimc.javadowngrader.runtime.RuntimeRoot;
 import org.gradle.api.DefaultTask;
@@ -74,19 +74,19 @@ public abstract class DowngradeJarTask extends DefaultTask {
         final File inputFile = getInput().getAsFile().get();
         System.out.println("Downgrading jar: " + inputFile);
 
-        try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), (ClassLoader)null)) {
+        try (FileSystem inFs = FileSystems.newFileSystem(inputFile.toPath(), (ClassLoader) null)) {
             final Path inRoot = inFs.getRootDirectories().iterator().next();
 
             final Collection<String> runtimeDeps = new HashSet<>();
             final TransformerManager transformerManager = new TransformerManager(
-                new PathClassProvider(inRoot, new LazyFileClassProvider(getCompileClassPath().getFiles(), new BasicClassProvider()))
+                    new PathClassProvider(inRoot, new LazyFileClassProvider(getCompileClassPath().getFiles(), new BasicClassProvider()))
             );
             transformerManager.addBytecodeTransformer(
-                JavaDowngraderTransformer.builder(transformerManager)
-                    .targetVersion(getTargetVersion().get())
-                    .classFilter(c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c))))
-                    .depCollector(runtimeDeps::add)
-                    .build()
+                    JavaDowngraderTransformer.builder(transformerManager)
+                            .targetVersion(getTargetVersion().get())
+                            .classFilter(c -> Files.isRegularFile(inRoot.resolve(ClassNameUtil.toClassFilename(c))))
+                            .depCollector(runtimeDeps::add)
+                            .build()
             );
 
             final String outputName = inputFile.getName().substring(0, inputFile.getName().length() - 4) + getOutputSuffix().get();
