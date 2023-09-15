@@ -25,6 +25,7 @@
 package net.raphimc.javadowngrader.runtime.java.lang;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Set;
 
 public class StackWalker {
 
@@ -36,6 +37,14 @@ public class StackWalker {
     }
 
     public static StackWalker getInstance(final Option option) {
+        return new StackWalker();
+    }
+
+    public static StackWalker getInstance(final Set<Option> options) {
+        return new StackWalker();
+    }
+
+    public static StackWalker getInstance(final Set<Option> options, final int estimatedDepth) {
         return new StackWalker();
     }
 
