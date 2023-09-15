@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.standalone;
+package net.raphimc.javadowngrader.util;
 
 import org.objectweb.asm.Opcodes;
 
@@ -37,13 +37,13 @@ public enum JavaVersion {
     JAVA_21("21", Opcodes.V21),
     ;
 
+    private final String name;
+    private final int version;
+
     JavaVersion(final String name, final int version) {
         this.name = name;
         this.version = version;
     }
-
-    private final String name;
-    private final int version;
 
     public String getName() {
         return this.name;
@@ -51,6 +51,30 @@ public enum JavaVersion {
 
     public int getVersion() {
         return this.version;
+    }
+
+    public String getFakeJavaVersionName() {
+        if (this.ordinal() <= JAVA_8.ordinal()) {
+            return "1." + this.name + ".0";
+        } else {
+            return this.version + ".0.0";
+        }
+    }
+
+    public String getFakeSpecificationVersionName() {
+        if (this.ordinal() <= JAVA_8.ordinal()) {
+            return "1." + this.name;
+        } else {
+            return this.name;
+        }
+    }
+
+    public static JavaVersion getByName(String name) {
+        name = name.toLowerCase().replace("java", "").replace("j", "");
+        for (JavaVersion version : JavaVersion.values()) {
+            if (version.getName().equalsIgnoreCase(name)) return version;
+        }
+        return null;
     }
 
 }

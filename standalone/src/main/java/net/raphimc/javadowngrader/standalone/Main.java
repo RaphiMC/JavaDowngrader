@@ -29,6 +29,7 @@ import net.raphimc.javadowngrader.impl.classtransform.util.ClassNameUtil;
 import net.raphimc.javadowngrader.runtime.RuntimeRoot;
 import net.raphimc.javadowngrader.standalone.progress.MultiThreadedProgressBar;
 import net.raphimc.javadowngrader.standalone.util.GeneralUtil;
+import net.raphimc.javadowngrader.util.JavaVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

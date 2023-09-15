@@ -19,18 +19,19 @@ package net.raphimc.javadowngrader.standalone;
 
 import joptsimple.ValueConversionException;
 import joptsimple.ValueConverter;
+import net.raphimc.javadowngrader.util.JavaVersion;
 
 import java.util.StringJoiner;
 
 public class JavaVersionEnumConverter implements ValueConverter<JavaVersion> {
 
     @Override
-    public JavaVersion convert(String s) {
-        final String input = s.toLowerCase().replace("java", "").replace("j", "");
-        for (JavaVersion version : JavaVersion.values()) {
-            if (version.getName().equalsIgnoreCase(input)) return version;
+    public JavaVersion convert(final String name) {
+        final JavaVersion version = JavaVersion.getByName(name);
+        if (version == null) {
+            throw new ValueConversionException("Unable to find version '" + name + "'");
         }
-        throw new ValueConversionException("Unable to find version '" + s + "'");
+        return version;
     }
 
     @Override
