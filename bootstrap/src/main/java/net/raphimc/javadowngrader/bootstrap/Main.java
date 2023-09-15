@@ -38,6 +38,7 @@ public class Main {
             final String jarPath = Main.class.getProtectionDomain().getCodeSource().getLocation().getPath();
             final String jarName = jarPath.substring(jarPath.lastIndexOf('/') + 1);
             System.out.println("Usage: java -jar " + jarName + " <jar> [args]");
+            System.out.println("Usage as java agent: java -javaagent:" + jarName + " -jar ...");
             return;
         }
 
@@ -70,6 +71,8 @@ public class Main {
         final InjectionClassLoader injectionClassLoader = new InjectionClassLoader(transformerManager, urls);
         Thread.currentThread().setContextClassLoader(injectionClassLoader);
         Methods.invoke(null, Methods.getDeclaredMethod(injectionClassLoader.loadClass(mainClass), "main", String[].class), (Object) args);
+
+        JavaVersionSpoofer.modifyProperties();
     }
 
 }
