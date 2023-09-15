@@ -18,17 +18,14 @@
 package net.raphimc.javadowngrader.transformer.j15;
 
 import net.raphimc.javadowngrader.util.ASMUtil;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import net.raphimc.javadowngrader.util.Constants;
+import org.objectweb.asm.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.RecordComponentNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class RecordReplacer {
 
@@ -61,9 +58,12 @@ public class RecordReplacer {
             classNode.recordComponents = Collections.emptyList();
         }
 
-        classNode.methods.remove(ASMUtil.getMethod(classNode, "equals", EQUALS_DESC));
-        final MethodVisitor equals = classNode.visitMethod(Opcodes.ACC_PUBLIC, "equals", EQUALS_DESC, null, null);
-        {
+        final MethodNode defaultEquals = ASMUtil.getMethod(classNode, "equals", EQUALS_DESC);
+        if (defaultEquals == null) throw new IllegalStateException("Could not find default equals method");
+        RecordField[] equalsFields = getFields(defaultEquals);
+        if (equalsFields != null) {
+            classNode.methods.remove(defaultEquals);
+            final MethodVisitor equals = classNode.visitMethod(Opcodes.ACC_PUBLIC, "equals", EQUALS_DESC, null, null);
             equals.visitCode();
 
             equals.visitVarInsn(Opcodes.ALOAD, 0);
@@ -88,12 +88,12 @@ public class RecordReplacer {
             equals.visitVarInsn(Opcodes.ASTORE, 2);
 
             final Label notEqualLabel = new Label();
-            for (final RecordComponentNode component : classNode.recordComponents) {
+            for (RecordField field : equalsFields) {
                 equals.visitVarInsn(Opcodes.ALOAD, 0);
-                equals.visitFieldInsn(Opcodes.GETFIELD, classNode.name, component.name, component.descriptor);
+                equals.visitFieldInsn(Opcodes.GETFIELD, classNode.name, field.name, field.descriptor);
                 equals.visitVarInsn(Opcodes.ALOAD, 2);
-                equals.visitFieldInsn(Opcodes.GETFIELD, classNode.name, component.name, component.descriptor);
-                if (Type.getType(component.descriptor).getSort() >= Type.ARRAY) { // ARRAY or OBJECT
+                equals.visitFieldInsn(Opcodes.GETFIELD, classNode.name, field.name, field.descriptor);
+                if (Type.getType(field.descriptor).getSort() >= Type.ARRAY) { // ARRAY or OBJECT
                     equals.visitMethodInsn(
                             Opcodes.INVOKESTATIC,
                             Type.getInternalName(Objects.class),
@@ -103,10 +103,10 @@ public class RecordReplacer {
                     );
                     equals.visitJumpInsn(Opcodes.IFEQ, notEqualLabel);
                     continue;
-                } else if ("BSCIZ".contains(component.descriptor)) {
+                } else if ("BSCIZ".contains(field.descriptor)) {
                     equals.visitJumpInsn(Opcodes.IF_ICMPNE, notEqualLabel);
                     continue;
-                } else if (component.descriptor.equals("F")) {
+                } else if (field.descriptor.equals("F")) {
                     equals.visitMethodInsn(
                             Opcodes.INVOKESTATIC,
                             Type.getInternalName(Float.class),
@@ -114,7 +114,7 @@ public class RecordReplacer {
                             "(FF)I",
                             false
                     );
-                } else if (component.descriptor.equals("D")) {
+                } else if (field.descriptor.equals("D")) {
                     equals.visitMethodInsn(
                             Opcodes.INVOKESTATIC,
                             Type.getInternalName(Double.class),
@@ -122,10 +122,10 @@ public class RecordReplacer {
                             "(DD)I",
                             false
                     );
-                } else if (component.descriptor.equals("J")) {
+                } else if (field.descriptor.equals("J")) {
                     equals.visitInsn(Opcodes.LCMP);
                 } else {
-                    throw new AssertionError("Unknown descriptor " + component.descriptor);
+                    throw new AssertionError("Unknown descriptor " + field.descriptor);
                 }
                 equals.visitJumpInsn(Opcodes.IFNE, notEqualLabel);
             }
@@ -138,23 +138,26 @@ public class RecordReplacer {
             equals.visitEnd();
         }
 
-        classNode.methods.remove(ASMUtil.getMethod(classNode, "hashCode", HASHCODE_DESC));
-        final MethodVisitor hashCode = classNode.visitMethod(Opcodes.ACC_PUBLIC, "hashCode", HASHCODE_DESC, null, null);
-        {
+        final MethodNode defaultHashCode = ASMUtil.getMethod(classNode, "hashCode", HASHCODE_DESC);
+        if (defaultHashCode == null) throw new IllegalStateException("Could not find default hashCode method");
+        RecordField[] hashCodeFields = getFields(defaultHashCode);
+        if (hashCodeFields != null) {
+            classNode.methods.remove(defaultHashCode);
+            final MethodVisitor hashCode = classNode.visitMethod(Opcodes.ACC_PUBLIC, "hashCode", HASHCODE_DESC, null, null);
             hashCode.visitCode();
 
             hashCode.visitInsn(Opcodes.ICONST_0);
-            for (final RecordComponentNode component : classNode.recordComponents) {
+            for (RecordField field : hashCodeFields) {
                 hashCode.visitIntInsn(Opcodes.BIPUSH, 31);
                 hashCode.visitInsn(Opcodes.IMUL);
                 hashCode.visitVarInsn(Opcodes.ALOAD, 0);
-                hashCode.visitFieldInsn(Opcodes.GETFIELD, classNode.name, component.name, component.descriptor);
-                final String owner = PRIMITIVE_WRAPPERS.get(component.descriptor);
+                hashCode.visitFieldInsn(Opcodes.GETFIELD, classNode.name, field.name, field.descriptor);
+                final String owner = PRIMITIVE_WRAPPERS.get(field.descriptor);
                 hashCode.visitMethodInsn(
                         Opcodes.INVOKESTATIC,
                         owner != null ? owner : "java/util/Objects",
                         "hashCode",
-                        "(" + (owner != null ? component.descriptor : "Ljava/lang/Object;") + ")I",
+                        "(" + (owner != null ? field.descriptor : "Ljava/lang/Object;") + ")I",
                         false
                 );
                 hashCode.visitInsn(Opcodes.IADD);
@@ -164,9 +167,12 @@ public class RecordReplacer {
             hashCode.visitEnd();
         }
 
-        classNode.methods.remove(ASMUtil.getMethod(classNode, "toString", TOSTRING_DESC));
-        final MethodVisitor toString = classNode.visitMethod(Opcodes.ACC_PUBLIC, "toString", TOSTRING_DESC, null, null);
-        {
+        final MethodNode defaultToString = ASMUtil.getMethod(classNode, "toString", TOSTRING_DESC);
+        if (defaultToString == null) throw new IllegalStateException("Could not find default toString method");
+        RecordField[] toStringFields = getFields(defaultToString);
+        if (toStringFields != null) {
+            classNode.methods.remove(defaultToString);
+            final MethodVisitor toString = classNode.visitMethod(Opcodes.ACC_PUBLIC, "toString", TOSTRING_DESC, null, null);
             toString.visitCode();
 
             final StringBuilder formatString = new StringBuilder("%s[");
@@ -200,17 +206,17 @@ public class RecordReplacer {
             );
             toString.visitInsn(Opcodes.AASTORE);
             int i = 1;
-            for (final RecordComponentNode component : classNode.recordComponents) {
+            for (RecordField field : toStringFields) {
                 toString.visitInsn(Opcodes.DUP);
                 toString.visitIntInsn(Opcodes.SIPUSH, i);
                 toString.visitVarInsn(Opcodes.ALOAD, 0);
-                toString.visitFieldInsn(Opcodes.GETFIELD, classNode.name, component.name, component.descriptor);
-                final String owner = PRIMITIVE_WRAPPERS.get(component.descriptor);
+                toString.visitFieldInsn(Opcodes.GETFIELD, classNode.name, field.name, field.descriptor);
+                final String owner = PRIMITIVE_WRAPPERS.get(field.descriptor);
                 toString.visitMethodInsn(
                         Opcodes.INVOKESTATIC,
                         owner != null ? owner : "java/util/Objects",
                         "toString",
-                        "(" + (owner != null ? component.descriptor : "Ljava/lang/Object;") + ")Ljava/lang/String;",
+                        "(" + (owner != null ? field.descriptor : "Ljava/lang/Object;") + ")Ljava/lang/String;",
                         false
                 );
                 toString.visitInsn(Opcodes.AASTORE);
@@ -230,6 +236,36 @@ public class RecordReplacer {
 
         classNode.recordComponents = null;
         return true;
+    }
+
+    private static RecordField[] getFields(final MethodNode method) {
+        for (AbstractInsnNode instruction : method.instructions) {
+            if (!(instruction instanceof InvokeDynamicInsnNode)) continue;
+            final InvokeDynamicInsnNode invokeDynamic = (InvokeDynamicInsnNode) instruction;
+            if (!invokeDynamic.bsm.getOwner().equals("java/lang/runtime/ObjectMethods")) continue;
+            if (!invokeDynamic.bsm.getName().equals("bootstrap")) continue;
+            if (!invokeDynamic.bsm.getDesc().equals(Constants.OBJECTMETHODS_BOOTSTRAP_DESC)) continue;
+
+            List<RecordField> fields = new ArrayList<>();
+            for (int i = 2; i < invokeDynamic.bsmArgs.length; i++) {
+                if (!(invokeDynamic.bsmArgs[i] instanceof Handle)) throw new IllegalStateException("bsm arg " + i + " is not a handle");
+                final Handle handle = (Handle) invokeDynamic.bsmArgs[i];
+                fields.add(new RecordField(handle.getName(), handle.getDesc()));
+            }
+            return fields.toArray(new RecordField[0]);
+        }
+        return null; // You can override equals/hashCode/toString, we should not replace them with the default impl
+    }
+
+
+    private static class RecordField {
+        private final String name;
+        private final String descriptor;
+
+        private RecordField(final String name, final String descriptor) {
+            this.name = name;
+            this.descriptor = descriptor;
+        }
     }
 
 }

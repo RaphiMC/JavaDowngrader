@@ -23,6 +23,7 @@ import net.raphimc.javadowngrader.impl.classtransform.JavaDowngraderTransformer;
 import net.raphimc.javadowngrader.impl.classtransform.util.ClassNameUtil;
 import net.raphimc.javadowngrader.runtime.RuntimeRoot;
 import net.raphimc.javadowngrader.util.Constants;
+import net.raphimc.javadowngrader.util.JavaVersion;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -65,6 +66,17 @@ public class AgentMain {
         final TransformerManager transformerManager = new TransformerManager(new InstrumentationClassProvider(instrumentation));
         transformerManager.addBytecodeTransformer(new JavaDowngraderTransformer(transformerManager));
         transformerManager.hookInstrumentation(instrumentation);
+
+        if (System.getProperty("spoofJavaVersion") != null) {
+            final JavaVersion spoofedJavaVersion = JavaVersion.getByName(System.getProperty("spoofJavaVersion"));
+            if (spoofedJavaVersion == null) {
+                System.err.println("Unable to find version '" + System.getProperty("spoofJavaVersion") + "'");
+                System.exit(-1);
+            }
+            System.setProperty("java.version", spoofedJavaVersion.getFakeJavaVersionName());
+            System.setProperty("java.class.version", String.valueOf(spoofedJavaVersion.getVersion()));
+            System.setProperty("java.specification.version", spoofedJavaVersion.getFakeSpecificationVersionName());
+        }
     }
 
 }
