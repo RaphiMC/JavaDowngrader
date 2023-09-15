@@ -1,0 +1,48 @@
+plugins {
+    id "java"
+    id "application"
+}
+
+configurations {
+    include
+
+    implementation.extendsFrom include
+    api.extendsFrom include
+}
+
+dependencies {
+    include project(":impl-classtransform")
+
+    include "net.lenni0451:Reflect:1.2.4"
+}
+
+application {
+    mainClass = "net.raphimc.javadowngrader.bootstrap.Main"
+}
+
+jar {
+    dependsOn configurations.include
+    from {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        configurations.include.collect {
+            zipTree(it)
+        }
+    } {
+        exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
+    }
+
+    manifest {
+        attributes(
+                "Main-Class": application.mainClass,
+                "Premain-Class": "net.raphimc.javadowngrader.bootstrap.AgentMain",
+                "Agent-Class": "net.raphimc.javadowngrader.bootstrap.AgentMain",
+                "Can-Redefine-Classes": "true",
+                "Can-Retransform-Classes": "true",
+                "Multi-Release": "true"
+        )
+    }
+}
+
+project.tasks.withType(PublishToMavenRepository).forEach {
+    it.enabled = false
+}

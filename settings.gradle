@@ -8,6 +8,7 @@ pluginManagement {
 rootProject.name = "JavaDowngrader"
 
 include(":standalone")
+include(":bootstrap")
 include(":runtime-dep")
 include(":impl-classtransform")
 include(":gradle-plugin")
