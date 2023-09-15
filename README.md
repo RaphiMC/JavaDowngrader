@@ -2,7 +2,7 @@
 Standalone program and library which can downgrade Java classes/programs down to Java 8.
 
 To use JavaDowngrader as a library in your application, check out the [Usage (As a library)](#usage-as-a-library) section.  
-If you just want to downgrade .jar files you can check out the [Usage (Standalone)](#usage-standalone) section.
+If you just want to downgrade .jar files you can check out the [Usage (Standalone)](#usage-standalonebootstrap) section.
 
 ## Features
 - Supports up to Java 21 and down to Java 8
@@ -19,12 +19,19 @@ If you want the executable jar file you can download a stable release from [GitH
 To use JavaDowngrader with Gradle/Maven you can use this [Maven server](https://maven.lenni0451.net/#/releases/net/raphimc/JavaDowngrader) or [Jitpack](https://jitpack.io/#RaphiMC/JavaDowngrader).  
 You can also find instructions how to implement it into your build script there.
 
-## Usage (Standalone)
+## Usage (Standalone/Bootstrap)
 1. Download the latest version from the [Releases section](#executable-jar-file)
 2. Run the jar file with `java -jar JavaDowngrader-whateverversion.jar` to see the usage
 
+### Downgrade ahead of time
 Here is an example command to convert the jar input.jar to Java 8 and output it to output.jar:
-``java -jar JavaDowngrader-whateverversion.jar -i "input.jar" -o "output.jar" -v 8``
+``java -jar JavaDowngrader-Standalone-whateverversion.jar -i "input.jar" -o "output.jar" -v 8``
+
+### Downgrade during runtime
+Here is an example command to run a jar file and downgrade it during runtime by using the bootstrap java agent:
+``java -javaagent:JavaDowngrader-Bootstrap-whateverversion.jar -jar the_real_jar_you_want_to_run.jar``
+
+Additionally, you can set the ``-DspoofJavaVersion=<java version>`` property to bypass application specific checks for the Java version.
 
 ## Usage (As a library)
 To transform a ``ClassNode`` you can use the ``JavaDowngrader`` class.  
