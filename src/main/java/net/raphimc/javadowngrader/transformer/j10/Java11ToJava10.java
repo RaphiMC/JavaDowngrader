@@ -47,6 +47,8 @@ public class Java11ToJava10 extends DowngradingTransformer {
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/zip/Inflater", "setInput", "(Ljava/nio/ByteBuffer;)V", new InflaterSetInputMCR());
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/zip/Inflater", "inflate", "(Ljava/nio/ByteBuffer;)I", new InflaterInflateMCR());
+
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/io/OutputStream", "nullOutputStream", "()Ljava/io/OutputStream;", new OutputStreamNullOutputStreamMCR());
     }
 
     @Override
