@@ -29,6 +29,7 @@ import org.objectweb.asm.tree.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class DowngradingTransformer {
 
@@ -38,7 +39,7 @@ public abstract class DowngradingTransformer {
     private final int targetVersion;
 
     private final Map<String, MethodCallReplacer> methodCallReplacers = new HashMap<>();
-    private final Map<String, List<String>> classReplacements = new HashMap<>();
+    private final Map<String, ClassReplacement> classReplacements = new HashMap<>();
 
     public DowngradingTransformer(final int sourceVersion, final int targetVersion) {
         this.sourceVersion = sourceVersion;
@@ -57,26 +58,16 @@ public abstract class DowngradingTransformer {
         this.methodCallReplacers.put(owner + ';' + name + descriptor, replacer);
     }
 
+    protected void addClassReplacement(final String name, final ClassReplacement replacement) {
+        classReplacements.put(name, replacement);
+    }
+
     protected void addClassReplacement(final String name) {
-        addClassReplacement(name, Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + name);
+        addClassReplacement(name, ClassReplacement.ofRuntime(name));
     }
 
-    protected void addClassReplacement(final String name, String[] extraDeps) {
-        for (int i = 0; i < extraDeps.length; i++) {
-            extraDeps[i] = Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + extraDeps[i];
-        }
-        addClassReplacement(name, Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + name, extraDeps);
-    }
-
-    protected void addClassReplacement(final String oldName, final String newName) {
-        this.classReplacements.put(oldName, Collections.singletonList(newName));
-    }
-
-    protected void addClassReplacement(final String oldName, final String newName, String... extraDeps) {
-        final List<String> classes = new ArrayList<>(1 + extraDeps.length);
-        classes.add(newName);
-        Collections.addAll(classes, extraDeps);
-        this.classReplacements.put(oldName, classes);
+    protected void addClassReplacementWithExtraDeps(final String name, String... extraDeps) {
+        addClassReplacement(name, ClassReplacement.ofRuntime(name, extraDeps));
     }
 
     public void transform(final ClassNode classNode, final DowngradeResult result) {
@@ -161,13 +152,16 @@ public abstract class DowngradingTransformer {
             final ClassRemapper classRemapper = new ClassRemapper(remappedNode, new Remapper() {
                 @Override
                 public String map(String internalName) {
-                    final List<String> classes = classReplacements.get(internalName);
-                    if (classes == null) {
+                    final ClassReplacement replacement = classReplacements.get(internalName);
+                    if (replacement == null) {
                         return internalName;
                     }
                     result.setRequiresStackMapFrames();
-                    classes.forEach(depCollector);
-                    return classes.get(0);
+                    if (replacement.includeDependency) {
+                        depCollector.accept(replacement.newName);
+                        replacement.extraDependencies.forEach(depCollector);
+                    }
+                    return replacement.newName;
                 }
             });
             classNode.accept(classRemapper);
@@ -203,6 +197,46 @@ public abstract class DowngradingTransformer {
 
     public int getTargetVersion() {
         return this.targetVersion;
+    }
+
+    protected static final class ClassReplacement {
+        private final String newName;
+        private final boolean includeDependency;
+        private final List<String> extraDependencies;
+
+        private ClassReplacement(String newName, boolean includeDependency, List<String> extraDependencies) {
+            if (!includeDependency && !extraDependencies.isEmpty()) {
+                throw new IllegalArgumentException("Cannot have extraDependencies if includeDependency is false!");
+            }
+            this.newName = newName;
+            this.includeDependency = includeDependency;
+            this.extraDependencies = extraDependencies;
+        }
+
+        public static ClassReplacement ofAbsolute(String newName) {
+            return new ClassReplacement(newName, true, Collections.emptyList());
+        }
+
+        public static ClassReplacement ofRuntime(String newName) {
+            return ofAbsolute(Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + newName);
+        }
+
+        public static ClassReplacement ofAbsolute(String newName, String... extraDependencies) {
+            return new ClassReplacement(newName, true, Arrays.asList(extraDependencies));
+        }
+
+        public static ClassReplacement ofRuntime(String newName, String... extraDependencies) {
+            return new ClassReplacement(
+                Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + newName, true,
+                Arrays.stream(extraDependencies)
+                    .map(c -> Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + c)
+                    .collect(Collectors.toList())
+            );
+        }
+
+        public static ClassReplacement ofRenameOnly(String newName) {
+            return new ClassReplacement(newName, false, Collections.emptyList());
+        }
     }
 
 }
