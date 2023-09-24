@@ -48,7 +48,7 @@ public class RecordReplacer {
     }
 
     public static boolean replace(final ClassNode classNode) {
-        if (!classNode.superName.equals("java/lang/Record")) return false;
+        if (!Objects.equals(classNode.superName, "java/lang/Record")) return false;
 
         classNode.access &= ~Opcodes.ACC_RECORD;
         if (classNode.signature != null) {
