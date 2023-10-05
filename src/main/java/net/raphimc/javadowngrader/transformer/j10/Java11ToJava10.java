@@ -32,6 +32,10 @@ public class Java11ToJava10 extends DowngradingTransformer {
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/lang/String", "isBlank", "()Z", new StringIsBlankMCR());
 
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/lang/String", "strip", "()Ljava/lang/String;", new StringStripMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/lang/String", "stripLeading", "()Ljava/lang/String;", new StringStripLeadingMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/lang/String", "stripTrailing", "()Ljava/lang/String;", new StringStripTrailingMCR());
+
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/nio/file/Files", "readString", new FilesReadStringMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/nio/file/Path", "of", new PathOfMCR());
