@@ -45,7 +45,7 @@ You can also find instructions how to implement it into your build script there.
 After adding the repository to your gradle project you can apply the plugin like this:
 ```groovy
 plugins {
-    id "net.raphimc.java-downgrader" version "1.1.1-SNAPSHOT"
+    id "net.raphimc.java-downgrader" version "x.x.x"
 }
 ```
 
