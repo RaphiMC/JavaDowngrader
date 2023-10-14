@@ -34,7 +34,7 @@ jobs:
       - name: Download Geyser
         run: curl -Lo Geyser-Standalone.jar https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/standalone
       - name: Downgrade Geyser
-        run: java -jar JavaDowngrader-Standalone-1.0.1-SNAPSHOT.jar -i Geyser-Standalone.jar -o Geyser-Standalone-out.jar -v 8
+        run: java -jar JavaDowngrader-Standalone-1.1.2-SNAPSHOT.jar -i Geyser-Standalone.jar -o Geyser-Standalone-out.jar -v 8
       - name: Try Geyser
         run: echo geyser stop | java -jar Geyser-Standalone-out.jar
   test-paperclip:
@@ -53,6 +53,6 @@ jobs:
       - name: Download Paperclip
         run: wget https://api.papermc.io/v2/projects/paper/versions/1.19.4/builds/536/downloads/paper-1.19.4-536.jar
       - name: Downgrade Paperclip
-        run: java -jar JavaDowngrader-Standalone-1.0.1-SNAPSHOT.jar -i paper-1.19.4-536.jar -o paperclip-downgraded.jar -v 8
+        run: java -jar JavaDowngrader-Standalone-1.1.2-SNAPSHOT.jar -i paper-1.19.4-536.jar -o paperclip-downgraded.jar -v 8
       - name: Run Paperclip
         run: java -Dpaperclip.patchonly=true -cp paperclip-downgraded.jar io.papermc.paperclip.Paperclip
