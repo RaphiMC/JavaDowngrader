@@ -39,7 +39,7 @@ As a low level class modification framework in your application [ClassTransform]
 JavaDowngrader provides the ``impl-classtransform`` submodule which contains various utility classes for ClassTransform.
 
 ## Usage (In Gradle)
-To use JavaDowngrader in Gradle you can get it from [Lenni0451's maven](https://maven.lenni0451.net/#/releases/net/raphimc/javadowngrader).
+To use JavaDowngrader in Gradle you can get it from [Lenni0451's maven](https://maven.lenni0451.net/#/releases/net/raphimc/java-downgrader).
 You can also find instructions how to implement it into your build script there.
 
 After adding the repository to your gradle project you can apply the plugin like this:
