@@ -14,14 +14,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven {
-            name = "Lenni0451 Releases"
-            url "https://maven.lenni0451.net/releases"
-        }
-        maven {
-            name = "Lenni0451 Snapshots"
-            url "https://maven.lenni0451.net/snapshots"
-        }
     }
 
     java {
