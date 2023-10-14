@@ -16,7 +16,7 @@ If you just want to downgrade .jar files you can check out the [Usage (Standalon
 If you want the executable jar file you can download a stable release from [GitHub](https://github.com/RaphiMC/JavaDowngrader/releases/latest) or the latest dev version from this [Jenkins](https://build.lenni0451.net/job/JavaDowngrader/).
 
 ### Gradle/Maven
-To use JavaDowngrader with Gradle/Maven you can use this [Maven server](https://maven.lenni0451.net/#/releases/net/raphimc/JavaDowngrader) or [Jitpack](https://jitpack.io/#RaphiMC/JavaDowngrader).  
+To use JavaDowngrader with Gradle/Maven you can get it from [Maven central](https://mvnrepository.com/artifact/net.raphimc.javadowngrader), [Lenni0451's maven](https://maven.lenni0451.net/#/releases/net/raphimc/javadowngrader) or [Jitpack](https://jitpack.io/#RaphiMC/JavaDowngrader).
 You can also find instructions how to implement it into your build script there.
 
 ## Usage (Standalone/Bootstrap)
@@ -39,19 +39,13 @@ As a low level class modification framework in your application [ClassTransform]
 JavaDowngrader provides the ``impl-classtransform`` submodule which contains various utility classes for ClassTransform.
 
 ## Usage (In Gradle)
-To use JavaDowngrader in gradle (To downgrade a whole jar or one of your source sets) you have to add the following to the top of your build.gradle:
-```groovy
-buildscript {
-    repositories {
-        maven {
-            name = "Lenni0451 Releases"
-            url "https://maven.lenni0451.net/releases"
-        }
-    }
+To use JavaDowngrader in Gradle you can get it from [Lenni0451's maven](https://maven.lenni0451.net/#/releases/net/raphimc/javadowngrader).
+You can also find instructions how to implement it into your build script there.
 
-    dependencies {
-        classpath "net.raphimc.javadowngrader:gradle-plugin:1.0.0"
-    }
+After adding the repository to your gradle project you can apply the plugin like this:
+```groovy
+plugins {
+    id "net.raphimc.java-downgrader" version "1.1.1-SNAPSHOT"
 }
 ```
 
