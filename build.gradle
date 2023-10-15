@@ -98,5 +98,5 @@ allprojects {
 dependencies {
     api project(":runtime-dep")
 
-    api "org.ow2.asm:asm-commons:9.5"
+    api "org.ow2.asm:asm-commons:9.5" // TODO: Bump
 }
