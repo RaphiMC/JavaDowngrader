@@ -13,7 +13,7 @@ configurations {
 dependencies {
     include project(":impl-classtransform")
 
-    include "net.lenni0451:Reflect:1.2.4"
+    include "net.lenni0451:Reflect:1.3.0"
 }
 
 application {

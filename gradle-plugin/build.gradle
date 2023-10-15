@@ -1,5 +1,53 @@
-dependencies {
-    api project(":impl-classtransform")
+apply plugin: "java-gradle-plugin"
 
+dependencies {
     compileOnly gradleApi()
+
+    api project(":impl-classtransform")
+}
+
+gradlePlugin {
+    website = "https://github.com/RaphiMC/JavaDowngrader"
+    vcsUrl = "https://github.com/RaphiMC/JavaDowngrader"
+    plugins {
+        javadowngrader {
+            id = "net.raphimc.java-downgrader"
+            implementationClass = "net.raphimc.javadowngrader.gradle.JavaDowngraderPlugin"
+            displayName = "JavaDowngrader"
+            description = "Standalone program and library which can downgrade Java classes/programs down to Java 8"
+            tags.addAll("class downgrade", "class modification", "java downgrade")
+        }
+    }
+}
+
+publishing {
+    publications {
+        pluginMaven(MavenPublication) {
+            pom {
+                name = "JavaDowngrader"
+                description = "Standalone program and library which can downgrade Java classes/programs down to Java 8"
+                url = "https://github.com/RaphiMC/JavaDowngrader"
+                licenses {
+                    license {
+                        name = "LGPL-3.0 License"
+                        url = "https://github.com/RaphiMC/JavaDowngrader/blob/main/LICENSE"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "RK_01"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git://github.com/RaphiMC/JavaDowngrader.git"
+                    developerConnection = "scm:git:ssh://github.com/RaphiMC/JavaDowngrader.git"
+                    url = "https://github.com/RaphiMC/JavaDowngrader.git"
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.pluginMaven
 }

@@ -14,14 +14,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven {
-            name = "Lenni0451 Releases"
-            url "https://maven.lenni0451.net/releases"
-        }
-        maven {
-            name = "Lenni0451 Snapshots"
-            url "https://maven.lenni0451.net/snapshots"
-        }
     }
 
     java {
@@ -43,7 +35,7 @@ allprojects {
         repositories {
             maven {
                 name = "reposilite"
-                url = project.maven_version.endsWith("SNAPSHOT") ? "https://maven.lenni0451.net/snapshots" : "https://maven.lenni0451.net/releases"
+                url = "https://maven.lenni0451.net/" + (project.maven_version.endsWith("SNAPSHOT") ? "snapshots" : "releases")
 
                 credentials(PasswordCredentials)
                 authentication {
@@ -51,6 +43,28 @@ allprojects {
                 }
             }
         }
+    }
+
+    signing {
+        setRequired(false)
+        sign configurations.archives
+    }
+}
+
+configure(allprojects.findAll { it.name != "gradle-plugin" }) {
+    publishing {
+        repositories {
+            maven {
+                name = "ossrh"
+                url = "https://s01.oss.sonatype.org/" + (project.maven_version.endsWith("SNAPSHOT") ? "content/repositories/snapshots/" : "service/local/staging/deploy/maven2/")
+
+                credentials(PasswordCredentials)
+                authentication {
+                    basic(BasicAuthentication)
+                }
+            }
+        }
+
         publications {
             maven(MavenPublication) {
                 groupId = project.maven_group
@@ -85,11 +99,11 @@ allprojects {
     }
 
     signing {
-        setRequired(false)
-        sign configurations.archives
         sign publishing.publications.maven
     }
+}
 
+allprojects {
     project.tasks.withType(PublishToMavenRepository).forEach {
         it.dependsOn(project.tasks.withType(Sign))
     }
@@ -98,5 +112,5 @@ allprojects {
 dependencies {
     api project(":runtime-dep")
 
-    api "org.ow2.asm:asm-commons:9.5" // TODO: Bump
+    api "org.ow2.asm:asm-commons:9.6"
 }
