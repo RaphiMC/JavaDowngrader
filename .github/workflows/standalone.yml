@@ -100,8 +100,9 @@ jobs:
         run: |
           wget https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
           java -jar BuildTools.jar
+          7z x spigot-*.jar "META-INF/versions/spigot-*.jar"
       - name: Downgrade Spigot
-        run: java -jar JavaDowngrader-Standalone-1.1.2-SNAPSHOT.jar -i spigot-1.*.jar -o spigot-downgraded.jar -v 8
+        run: java -jar JavaDowngrader-Standalone-1.1.2-SNAPSHOT.jar -i META-INF/versions/spigot-*.jar -o spigot-downgraded.jar -v 8
       - name: Generate coverage report
         run: java -jar coverage-scanner-1.1.2-SNAPSHOT.jar spigot-downgraded.jar > coverage-spigot.txt
       - name: Upload coverage report
