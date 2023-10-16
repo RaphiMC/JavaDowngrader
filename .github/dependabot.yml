@@ -5,10 +5,26 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "gradle"
-    directory: "/Standalone"
+    directory: "/standalone"
     schedule:
       interval: "daily"
   - package-ecosystem: "gradle"
-    directory: "/RuntimeDep"
+    directory: "/bootstrap"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/coverage-scanner"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/runtime-dep"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/impl-classtransform"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/gradle-plugin"
     schedule:
       interval: "daily"
