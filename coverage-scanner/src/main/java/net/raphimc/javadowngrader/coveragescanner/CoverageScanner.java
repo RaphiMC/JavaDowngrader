@@ -25,6 +25,7 @@ import org.objectweb.asm.signature.SignatureVisitor;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -32,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SortedMap;
 
 public class CoverageScanner implements Closeable {
@@ -39,7 +41,7 @@ public class CoverageScanner implements Closeable {
     private final CtSym ct;
 
     private final Map<String, Integer> classVersionCache = new HashMap<>();
-    private final Map<String, URL> miscClassUrlCache = new HashMap<>();
+    private final Map<String, ClassInfo> classInfoCache = new HashMap<>();
 
     public CoverageScanner(@Nullable Path ctSymPath) throws IOException {
         ct = ctSymPath != null ? CtSym.open(ctSymPath) : null;
@@ -133,7 +135,83 @@ public class CoverageScanner implements Closeable {
                     }
                 }
                 // TODO
-                return null;
+                return new MethodVisitor(api) {
+                    @Override
+                    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                        return checkAnnotation(methodLocation, handler, descriptor, visible);
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+                        return checkAnnotation(methodLocation, handler, descriptor, visible);
+                    }
+
+                    @Override
+                    public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
+                        checkMember(methodLocation, handler, owner, name, descriptor, false);
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+                        return checkAnnotation(methodLocation, handler, descriptor, visible);
+                    }
+
+                    @Override
+                    public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+                        checkType(methodLocation, handler, Type.getType(descriptor));
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath, Label[] start, Label[] end, int[] index, String descriptor, boolean visible) {
+                        return checkAnnotation(methodLocation, handler, descriptor, visible);
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitParameterAnnotation(int parameter, String descriptor, boolean visible) {
+                        return checkAnnotation(methodLocation, handler, descriptor, visible);
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+                        return checkAnnotation(methodLocation, handler, descriptor, visible);
+                    }
+
+                    @Override
+                    public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
+                        checkType(methodLocation, handler, Type.getType(descriptor));
+                        checkObject(methodLocation, handler, bootstrapMethodHandle);
+                        for (final Object arg : bootstrapMethodArguments) {
+                            checkObject(methodLocation, handler, arg);
+                        }
+                    }
+
+                    @Override
+                    public void visitLdcInsn(Object value) {
+                        checkObject(methodLocation, handler, value);
+                    }
+
+                    @Override
+                    public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+                        checkMember(methodLocation, handler, owner, name, descriptor, true);
+                    }
+
+                    @Override
+                    public void visitMultiANewArrayInsn(String descriptor, int numDimensions) {
+                        checkType(methodLocation, handler, Type.getType(descriptor));
+                    }
+
+                    @Override
+                    public void visitTryCatchBlock(Label start, Label end, Label handlerLabel, String type) {
+                        if (type != null) {
+                            checkType(methodLocation, handler, Type.getObjectType(type));
+                        }
+                    }
+
+                    @Override
+                    public void visitTypeInsn(int opcode, String type) {
+                        checkType(methodLocation, handler, Type.getObjectType(type));
+                    }
+                };
             }
 
             @Override
@@ -199,7 +277,11 @@ public class CoverageScanner implements Closeable {
             public void visitEnum(String name, String descriptor, String value) {
                 final Type type = Type.getType(descriptor);
                 checkType(location, handler, type);
-                // TODO: Check field
+                checkMember(
+                    location, handler,
+                    Type.getType(descriptor).getInternalName(), value, descriptor,
+                    false
+                );
             }
         };
     }
@@ -207,8 +289,11 @@ public class CoverageScanner implements Closeable {
     private void checkObject(MethodLocation location, ScanHandler handler, Object obj) {
         if (obj instanceof Handle) {
             final Handle handle = (Handle)obj;
-            checkType(location, handler, Type.getObjectType(handle.getOwner()));
-            checkType(location, handler, Type.getType(handle.getDesc()));
+            checkMember(
+                location, handler,
+                handle.getOwner(), handle.getName(), handle.getDesc(),
+                handle.getTag() >= Opcodes.INVOKEVIRTUAL
+            );
         }
         if (obj instanceof ConstantDynamic) {
             final ConstantDynamic condy = (ConstantDynamic)obj;
@@ -254,32 +339,115 @@ public class CoverageScanner implements Closeable {
         }
 
         if (!className.startsWith("java.") && !className.startsWith("jdk.")) return;
-        if (miscClassUrlCache.containsKey(className)) return;
 
         final URL classUrl = ClassLoader.getSystemResource(className.replace('.', '/').concat(".class"));
         if (classUrl == null) {
             handler.missing(location, new MethodLocation(className, null, 0));
         } else {
             classVersionCache.put(className, 0);
-            miscClassUrlCache.put(className, classUrl);
         }
     }
 
-    private void checkField(MethodLocation location, ScanHandler handler, String owner, String name, String descriptor) {
+    private void checkMember(
+        MethodLocation location, ScanHandler handler,
+        String owner, String name, String descriptor,
+        boolean isMethod
+    ) {
         final Type ownerType = Type.getObjectType(owner);
         checkType(location, handler, ownerType);
         // No need to check descriptor
 
+        if (ct == null) return;
+
         final String className = ownerType.getClassName();
-        final int addedVersion = classVersionCache.get(className);
-        if (addedVersion > location.inJava) return;
-        // TODO
+        final Integer addedVersion = classVersionCache.get(className);
+        if (addedVersion == null || addedVersion == 0 || addedVersion > location.inJava) return;
+
+        ClassInfo classInfo = classInfoCache.get(className);
+        if (classInfo == null) {
+            classInfo = constructClassInfo(className);
+        }
+        final Map<NameAndType, Integer> members = isMethod ? classInfo.methods : classInfo.fields;
+        final Integer memberAdded = members.get(new NameAndType(name, Type.getType(descriptor)));
+        if (memberAdded != null && memberAdded > location.inJava) {
+            // Unfortunately there's no good way to differentiate between something that was added in this Java and
+            // something that's always been there
+            handler.missing(location, new MethodLocation(className, name, memberAdded));
+        }
+    }
+
+    private ClassInfo constructClassInfo(String className) {
+        assert ct != null;
+        final ClassInfo result = new ClassInfo();
+        final SortedMap<Integer, Path> files = ct.getVersions(className);
+        if (files == null) {
+            return result;
+        }
+        for (final Map.Entry<Integer, Path> file : files.entrySet()) {
+            final ClassReader reader;
+            try (InputStream is = Files.newInputStream(file.getValue())) {
+                reader = new ClassReader(is);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            reader.accept(new ClassVisitor(Opcodes.ASM9) {
+                private void add(Map<NameAndType, Integer> members, String name, String descriptor) {
+                    members.putIfAbsent(new NameAndType(name, Type.getType(descriptor)), file.getKey());
+                }
+
+                @Override
+                public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+                    add(result.fields, name, descriptor);
+                    return null;
+                }
+
+                @Override
+                public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                    add(result.methods, name, descriptor);
+                    return null;
+                }
+            }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG);
+        }
+        return result;
     }
 
     @Override
     public void close() throws IOException {
         if (ct != null) {
             ct.close();
+        }
+    }
+
+    private static class ClassInfo {
+        final Map<NameAndType, Integer> fields = new HashMap<>();
+        final Map<NameAndType, Integer> methods = new HashMap<>();
+    }
+
+    private static class NameAndType {
+        final String name;
+        final Type type;
+
+        NameAndType(String name, Type type) {
+            this.name = name;
+            this.type = type;
+        }
+
+        @Override
+        public String toString() {
+            return name + (type.getSort() != Type.METHOD ? ":" : "") + type;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof NameAndType)) return false;
+            NameAndType that = (NameAndType)o;
+            return Objects.equals(name, that.name) && Objects.equals(type, that.type);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, type);
         }
     }
 
