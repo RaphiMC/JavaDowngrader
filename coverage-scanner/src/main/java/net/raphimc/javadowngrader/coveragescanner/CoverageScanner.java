@@ -35,24 +35,29 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CoverageScanner implements Closeable {
     @Nullable
     private final CtSym ct;
 
-    private final Map<String, Integer> classVersionCache = new HashMap<>();
-    private final Map<String, ClassInfo> classInfoCache = new HashMap<>();
+    private final Map<String, Integer> classVersionCache = new ConcurrentHashMap<>();
+    private final Map<String, ClassInfo> classInfoCache = new ConcurrentHashMap<>();
 
     public CoverageScanner(@Nullable Path ctSymPath) throws IOException {
         ct = ctSymPath != null ? CtSym.open(ctSymPath) : null;
     }
 
+    /**
+     * @apiNote {@code handler} may be called from multiple threads
+     */
     @SuppressWarnings("resource") // Handled by iterStream
     public void scanJar(Path jarPath, ScanHandler handler, @Nullable Integer baseJava) throws IOException {
         try (FileSystem fs = FileSystems.newFileSystem(jarPath, null)) {
             final Path root = fs.getRootDirectories().iterator().next();
             IOUtil.iterStream(
                 Files.walk(root)
+                    .parallel()
                     .filter(p -> p.toString().endsWith(".class"))
                     .filter(Files::isRegularFile),
                 path -> scanClass(path, handler, baseJava)
@@ -363,10 +368,7 @@ public class CoverageScanner implements Closeable {
         final Integer addedVersion = classVersionCache.get(className);
         if (addedVersion == null || addedVersion == 0 || addedVersion > location.inJava) return;
 
-        ClassInfo classInfo = classInfoCache.get(className);
-        if (classInfo == null) {
-            classInfo = constructClassInfo(className);
-        }
+        final ClassInfo classInfo = classInfoCache.computeIfAbsent(className, this::constructClassInfo);
         final Map<NameAndType, Integer> members = isMethod ? classInfo.methods : classInfo.fields;
         final Integer memberAdded = members.get(new NameAndType(name, Type.getType(descriptor)));
         if (memberAdded != null && memberAdded > location.inJava) {
