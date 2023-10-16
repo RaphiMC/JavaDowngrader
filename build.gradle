@@ -21,6 +21,14 @@ allprojects {
         withJavadocJar()
     }
 
+    javadoc {
+        options.tags(
+            "apiNote:a:API Note:",
+            "implSpec:a:Implementation Requirements:",
+            "implNote:a:Implementation Note:",
+        )
+    }
+
     jar {
         from("LICENSE") {
             rename { "${it}_${project.name ?: rootProject.name}" }
