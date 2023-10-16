@@ -75,7 +75,7 @@ public class CoverageScanner implements Closeable {
     public void scanClass(ClassReader reader, ScanHandler handler, @Nullable Integer baseJava) {
         final int javaVersion = baseJava != null
             ? baseJava
-            : reader.readInt(reader.getItem(1) - 7) - 44; // Match ClassReader.accept
+            : Math.max(reader.readInt(reader.getItem(1) - 7) - 44, 8);
         reader.accept(new ClassVisitor(Opcodes.ASM9) {
             MethodLocation classLocation;
 
