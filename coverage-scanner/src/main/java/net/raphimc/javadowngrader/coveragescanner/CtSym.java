@@ -17,10 +17,14 @@
  */
 package net.raphimc.javadowngrader.coveragescanner;
 
+import net.raphimc.javadowngrader.coveragescanner.io.IOSupplier;
+import net.raphimc.javadowngrader.coveragescanner.io.IOUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -32,18 +36,25 @@ import java.util.TreeMap;
 
 public class CtSym implements Closeable {
     private final FileSystem fs;
-    private final Path root;
-    private final Map<String, SortedMap<Integer, Path>> classes;
+    private final Map<String, SortedMap<Integer, IOSupplier<InputStream>>> classes;
 
-    private CtSym(Path path) throws IOException {
+    private CtSym(Path path, boolean injectJ8Unsafe) throws IOException {
         fs = FileSystems.newFileSystem(path, null);
-        root = fs.getRootDirectories().iterator().next();
-        classes = readClasses(root);
+        classes = readClasses(fs.getRootDirectories().iterator().next());
+
+        if (injectJ8Unsafe) {
+            final SortedMap<Integer, IOSupplier<InputStream>> unsafeMap =
+                classes.computeIfAbsent("sun.misc.Unsafe", c -> new TreeMap<>());
+            final URL unsafeUrl = CtSym.class.getResource("Unsafe.sig");
+            if (unsafeUrl != null) {
+                unsafeMap.put(8, unsafeUrl::openStream);
+            }
+        }
     }
 
     @SuppressWarnings("resource") // Handled by iterStream
-    private static Map<String, SortedMap<Integer, Path>> readClasses(Path root) throws IOException {
-        final Map<String, SortedMap<Integer, Path>> result = new HashMap<>();
+    private static Map<String, SortedMap<Integer, IOSupplier<InputStream>>> readClasses(Path root) throws IOException {
+        final Map<String, SortedMap<Integer, IOSupplier<InputStream>>> result = new HashMap<>();
         IOUtil.iterStream(Files.list(root), versionSet ->
             IOUtil.iterStream(Files.list(versionSet).filter(Files::isDirectory), module -> IOUtil.iterStream(
                 Files.walk(module)
@@ -55,13 +66,15 @@ public class CtSym implements Closeable {
                         .replace(sigFile.getFileSystem().getSeparator(), ".");
                     className = className.substring(0, className.length() - 4); // ".sig".length()
                     if (className.equals("module-info") || className.endsWith("package-info")) return;
-                    final SortedMap<Integer, Path> classList = result.computeIfAbsent(className, c -> new TreeMap<>());
+                    final SortedMap<Integer, IOSupplier<InputStream>> classList =
+                        result.computeIfAbsent(className, c -> new TreeMap<>());
+                    final IOSupplier<InputStream> supplier = () -> Files.newInputStream(sigFile);
                     versionSet.getFileName()
                         .toString()
                         .chars()
                         .map(c -> Character.digit(c, 36))
                         .forEach(version -> {
-                            if (classList.put(version, sigFile) != null) {
+                            if (classList.put(version, supplier) != null) {
                                 throw new IllegalStateException("Duplicate sig file for version " + version + ": " + sigFile);
                             }
                         });
@@ -71,12 +84,16 @@ public class CtSym implements Closeable {
         return result;
     }
 
+    public static CtSym open(Path path, boolean injectJ8Unsafe) throws IOException {
+        return new CtSym(path, injectJ8Unsafe);
+    }
+
     public static CtSym open(Path path) throws IOException {
-        return new CtSym(path);
+        return new CtSym(path, true);
     }
 
     @Nullable
-    public SortedMap<Integer, Path> getVersions(String className) {
+    public SortedMap<Integer, IOSupplier<InputStream>> getVersions(String className) {
         return classes.get(className);
     }
 

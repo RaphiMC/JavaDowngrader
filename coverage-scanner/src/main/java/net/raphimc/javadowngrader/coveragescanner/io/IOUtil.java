@@ -15,16 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.raphimc.javadowngrader.coveragescanner;
+package net.raphimc.javadowngrader.coveragescanner.io;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Path;
 import java.util.stream.Stream;
 
 public class IOUtil {
-    public static void iterStream(Stream<Path> stream, PathConsumer consumer) throws IOException {
-        try (final Stream<Path> s = stream) {
+    public static <T> void iterStream(Stream<T> stream, IOConsumer<T> consumer) throws IOException {
+        try (final Stream<T> s = stream) {
             s.forEach(path -> {
                 try {
                     consumer.accept(path);
@@ -35,10 +34,5 @@ public class IOUtil {
         } catch (UncheckedIOException e) {
             throw e.getCause();
         }
-    }
-
-    @FunctionalInterface
-    public interface PathConsumer {
-        void accept(Path path) throws IOException;
     }
 }

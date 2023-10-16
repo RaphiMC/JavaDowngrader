@@ -17,6 +17,8 @@
  */
 package net.raphimc.javadowngrader.coveragescanner;
 
+import net.raphimc.javadowngrader.coveragescanner.io.IOSupplier;
+import net.raphimc.javadowngrader.coveragescanner.io.IOUtil;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;
@@ -328,7 +330,7 @@ public class CoverageScanner implements Closeable {
         }
 
         if (ct != null) {
-            final SortedMap<Integer, Path> versions = ct.getVersions(className);
+            final SortedMap<Integer, ?> versions = ct.getVersions(className);
             if (versions != null) {
                 final int minVersion = versions.firstKey();
                 classVersionCache.put(className, minVersion);
@@ -402,13 +404,13 @@ public class CoverageScanner implements Closeable {
     private ClassInfo constructClassInfo(String className) {
         assert ct != null;
         final ClassInfo result = new ClassInfo();
-        final SortedMap<Integer, Path> files = ct.getVersions(className);
+        final SortedMap<Integer, IOSupplier<InputStream>> files = ct.getVersions(className);
         if (files == null) {
             return result;
         }
-        for (final Map.Entry<Integer, Path> file : files.entrySet()) {
+        for (final Map.Entry<Integer, IOSupplier<InputStream>> file : files.entrySet()) {
             final ClassReader reader;
-            try (InputStream is = Files.newInputStream(file.getValue())) {
+            try (InputStream is = file.getValue().get()) {
                 reader = new ClassReader(is);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
