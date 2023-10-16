@@ -139,7 +139,6 @@ public class CoverageScanner implements Closeable {
                         checkType(methodLocation, handler, Type.getObjectType(exc));
                     }
                 }
-                // TODO
                 return new MethodVisitor(api) {
                     @Override
                     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
@@ -343,7 +342,7 @@ public class CoverageScanner implements Closeable {
             }
         }
 
-        if (!className.startsWith("java.") && !className.startsWith("jdk.")) return;
+        if (!className.startsWith("java.")) return;
 
         final URL classUrl = ClassLoader.getSystemResource(className.replace('.', '/').concat(".class"));
         if (classUrl == null) {
