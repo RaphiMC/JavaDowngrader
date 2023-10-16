@@ -31,10 +31,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.SortedMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CoverageScanner implements Closeable {
@@ -367,12 +364,37 @@ public class CoverageScanner implements Closeable {
         final Integer addedVersion = classVersionCache.get(className);
         if (addedVersion == null || addedVersion == 0 || addedVersion > location.inJava) return;
 
-        final ClassInfo classInfo = classInfoCache.computeIfAbsent(className, this::constructClassInfo);
-        final Map<NameAndType, Integer> members = isMethod ? classInfo.methods : classInfo.fields;
+        ClassInfo classInfo = classInfoCache.computeIfAbsent(className, this::constructClassInfo);
+        Map<NameAndType, Integer> members = isMethod ? classInfo.methods : classInfo.fields;
         final Integer memberAdded = members.get(new NameAndType(name, Type.getType(descriptor)));
         if (memberAdded != null && memberAdded > location.inJava) {
             // Unfortunately there's no good way to differentiate between something that was added in this Java and
             // something that's always been there
+
+            final Set<String> searched = new HashSet<>();
+            searched.add(className);
+            final Deque<String> toSearch = new ArrayDeque<>();
+            toSearch.add(classInfo.superName);
+            toSearch.addAll(classInfo.interfaces);
+            searched.addAll(toSearch);
+            while (!toSearch.isEmpty()) {
+                final String checkName = toSearch.remove();
+                final Integer checkAddedVersion = classVersionCache.get(checkName);
+                if (checkAddedVersion != null && checkAddedVersion > location.inJava) continue;
+                classInfo = classInfoCache.computeIfAbsent(checkName, this::constructClassInfo);
+                members = isMethod ? classInfo.methods : classInfo.fields;
+                final Integer checkMemberAdded = members.get(new NameAndType(name, Type.getType(descriptor)));
+                if (checkMemberAdded == null || checkMemberAdded <= location.inJava) return; // It might exist
+                if (classInfo.superName != null && searched.add(classInfo.superName)) {
+                    toSearch.add(classInfo.superName);
+                }
+                for (final String intf : classInfo.interfaces) {
+                    if (searched.add(intf)) {
+                        toSearch.add(intf);
+                    }
+                }
+            }
+
             handler.missing(location, new MethodLocation(className, name, memberAdded));
         }
     }
@@ -392,6 +414,20 @@ public class CoverageScanner implements Closeable {
                 throw new UncheckedIOException(e);
             }
             reader.accept(new ClassVisitor(Opcodes.ASM9) {
+                @Override
+                public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                    if (result.superName != null && !Objects.equals(superName, result.superName) && !result.superName.equals("java/lang/Object")) {
+                        throw new IllegalStateException(
+                            "superName for " + name + " changed in Java " + file.getKey() +
+                                " from " + result.superName + " to " + superName + "."
+                        );
+                    }
+                    result.superName = superName;
+                    if (interfaces != null) {
+                        Collections.addAll(result.interfaces, interfaces);
+                    }
+                }
+
                 private void add(Map<NameAndType, Integer> members, String name, String descriptor) {
                     members.putIfAbsent(new NameAndType(name, Type.getType(descriptor)), file.getKey());
                 }
@@ -420,6 +456,8 @@ public class CoverageScanner implements Closeable {
     }
 
     private static class ClassInfo {
+        String superName;
+        final Set<String> interfaces = new LinkedHashSet<>();
         final Map<NameAndType, Integer> fields = new HashMap<>();
         final Map<NameAndType, Integer> methods = new HashMap<>();
     }
