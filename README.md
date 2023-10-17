@@ -13,14 +13,14 @@ If you just want to downgrade .jar files you can check out the [Usage (Standalon
 
 ## Releases
 ### Executable Jar File
-If you want the executable jar file you can download a stable release from [GitHub](https://github.com/RaphiMC/JavaDowngrader/releases/latest) or the latest dev version from this [Jenkins](https://build.lenni0451.net/job/JavaDowngrader/).
+If you want the executable jar file you can download a stable release from [GitHub Releases](https://github.com/RaphiMC/JavaDowngrader/releases/latest) or the latest dev version from [GitHub Actions](https://github.com/RaphiMC/JavaDowngrader/actions/workflows/build.yml) or [Lenni0451's Jenkins](https://build.lenni0451.net/job/JavaDowngrader/).
 
 ### Gradle/Maven
-To use JavaDowngrader with Gradle/Maven you can get it from [Maven central](https://mvnrepository.com/artifact/net.raphimc.javadowngrader), [Lenni0451's maven](https://maven.lenni0451.net/#/releases/net/raphimc/javadowngrader) or [Jitpack](https://jitpack.io/#RaphiMC/JavaDowngrader).
+To use JavaDowngrader with Gradle/Maven you can get it from [Maven Central](https://mvnrepository.com/artifact/net.raphimc.javadowngrader), [Lenni0451's Maven](https://maven.lenni0451.net/#/releases/net/raphimc/javadowngrader) or [Jitpack](https://jitpack.io/#RaphiMC/JavaDowngrader).
 You can also find instructions how to implement it into your build script there.
 
 ## Usage (Standalone/Bootstrap)
-1. Download the latest version from the [Releases section](#executable-jar-file)
+1. Download the latest version from the [GitHub Releases](#executable-jar-file)
 2. Run the jar file with `java -jar JavaDowngrader-whateverversion.jar` to see the usage
 
 ### Downgrade ahead of time
@@ -39,7 +39,7 @@ As a low level class modification framework in your application [ClassTransform]
 JavaDowngrader provides the ``impl-classtransform`` submodule which contains various utility classes for ClassTransform.
 
 ## Usage (In Gradle)
-To use JavaDowngrader in Gradle you can get it from [Lenni0451's maven](https://maven.lenni0451.net/#/releases/net/raphimc/java-downgrader).
+To use JavaDowngrader in Gradle you can get it from [Lenni0451's Maven](https://maven.lenni0451.net/#/releases/net/raphimc/java-downgrader).
 You can also find instructions how to implement it into your build script there.
 
 After adding the repository to your gradle project you can apply the plugin like this:
