@@ -64,18 +64,10 @@ public class CtSym implements Closeable {
                         .replace(sigFile.getFileSystem().getSeparator(), ".");
                     className = className.substring(0, className.length() - 4); // ".sig".length()
                     if (className.equals("module-info") || className.endsWith("package-info")) return;
-                    final SortedMap<Integer, IOSupplier<InputStream>> classList =
-                        result.computeIfAbsent(className, c -> new TreeMap<>());
-                    final IOSupplier<InputStream> supplier = () -> Files.newInputStream(sigFile);
-                    versionSet.getFileName()
-                        .toString()
-                        .chars()
-                        .map(c -> Character.digit(c, 36))
-                        .forEach(version -> {
-                            if (classList.put(version, supplier) != null) {
-                                throw new IllegalStateException("Duplicate sig file for version " + version + ": " + sigFile);
-                            }
-                        });
+                    result.computeIfAbsent(className, c -> new TreeMap<>()).put(
+                        Character.digit(versionSet.getFileName().toString().charAt(0), 36),
+                        () -> Files.newInputStream(sigFile)
+                    );
                 }
             ))
         );
@@ -104,6 +96,10 @@ public class CtSym implements Closeable {
                     .replace(classFile.getFileSystem().getSeparator(), ".");
                 className = className.substring(0, className.length() - 6); // ".class".length()
                 if (className.equals("module-info") || className.endsWith("package-info")) return;
+                if (className.startsWith("sun.")) {
+                    // Most sun. classes aren't stored in ct.sym, making it appear like these classes were added in this version of Java.
+                    return;
+                }
                 result.computeIfAbsent(className, c -> new TreeMap<>())
                     .put(runtimeVersion, () -> Files.newInputStream(classFile));
             }

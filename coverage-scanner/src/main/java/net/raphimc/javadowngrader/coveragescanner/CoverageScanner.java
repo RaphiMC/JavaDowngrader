@@ -326,6 +326,7 @@ public class CoverageScanner implements Closeable {
         if (type.getSort() != Type.OBJECT) return;
 
         final String className = type.getClassName();
+        if (className.equals(location.inClass)) return; // Current class is guaranteed
 
         final Integer cached = classVersionCache.get(className);
         if (cached != null) {
@@ -369,6 +370,8 @@ public class CoverageScanner implements Closeable {
         if (ct == null) return;
 
         final String className = ownerType.getClassName();
+        if (className.equals(location.inClass)) return; // Current class is guaranteed
+
         final Integer addedVersion = classVersionCache.get(className);
         if (addedVersion == null || addedVersion == 0 || addedVersion > location.inJava) return;
 
