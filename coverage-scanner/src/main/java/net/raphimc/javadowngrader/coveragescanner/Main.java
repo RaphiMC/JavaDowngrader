@@ -102,12 +102,12 @@ public class Main {
                 scanner.scanJar(jar, (location, missing) -> {
                     final StringBuilder message = new StringBuilder();
                     message.append(location.getInClass());
-                    if (location.getInMethod() != null) {
-                        message.append('.').append(location.getInMethod());
+                    if (location.getInMember() != null) {
+                        message.append('.').append(location.getInMember());
                     }
                     message.append(" uses ").append(missing.getInClass());
-                    if (missing.getInMethod() != null) {
-                        message.append('.').append(missing.getInMethod());
+                    if (missing.getInMember() != null) {
+                        message.append('.').append(missing.getInMember());
                     }
                     message.append(", which is not present in Java ").append(location.getInJava()).append('.');
                     if (missing.getInJava() > 0) {

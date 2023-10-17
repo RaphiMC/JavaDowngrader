@@ -77,11 +77,11 @@ public class CoverageScanner implements Closeable {
             ? baseJava
             : Math.max(reader.readInt(reader.getItem(1) - 7) - 44, 8);
         reader.accept(new ClassVisitor(Opcodes.ASM9) {
-            MethodLocation classLocation;
+            MemberLocation classLocation;
 
             @Override
             public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                classLocation = new MethodLocation(name.replace('/', '.'), null, javaVersion);
+                classLocation = new MemberLocation(name.replace('/', '.'), null, javaVersion);
                 checkSignature(classLocation, handler, signature, false);
                 if (superName != null) {
                     checkType(classLocation, handler, Type.getObjectType(superName));
@@ -113,24 +113,25 @@ public class CoverageScanner implements Closeable {
 
             @Override
             public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-                checkType(classLocation, handler, Type.getType(descriptor));
-                checkSignature(classLocation, handler, signature, true);
+                final MemberLocation fieldLocation = new MemberLocation(classLocation.inClass, name, classLocation.inJava);
+                checkType(fieldLocation, handler, Type.getType(descriptor));
+                checkSignature(fieldLocation, handler, signature, true);
                 return new FieldVisitor(api) {
                     @Override
                     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                        return checkAnnotation(classLocation, handler, descriptor, visible);
+                        return checkAnnotation(fieldLocation, handler, descriptor, visible);
                     }
 
                     @Override
                     public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-                        return checkAnnotation(classLocation, handler, descriptor, visible);
+                        return checkAnnotation(fieldLocation, handler, descriptor, visible);
                     }
                 };
             }
 
             @Override
             public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-                final MethodLocation methodLocation = new MethodLocation(classLocation.inClass, name, classLocation.inJava);
+                final MemberLocation methodLocation = new MemberLocation(classLocation.inClass, name, classLocation.inJava);
                 checkType(methodLocation, handler, Type.getType(descriptor));
                 checkSignature(methodLocation, handler, signature, false);
                 if (exceptions != null) {
@@ -236,7 +237,7 @@ public class CoverageScanner implements Closeable {
         }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     }
 
-    private void checkSignature(MethodLocation location, ScanHandler handler, String signature, boolean isField) {
+    private void checkSignature(MemberLocation location, ScanHandler handler, String signature, boolean isField) {
         if (signature == null) return;
         final SignatureVisitor visitor = new SignatureVisitor(Opcodes.ASM9) {
             @Override
@@ -252,7 +253,7 @@ public class CoverageScanner implements Closeable {
     }
 
     private AnnotationVisitor checkAnnotation(
-        MethodLocation location, ScanHandler handler, String descriptor, boolean visible
+        MemberLocation location, ScanHandler handler, String descriptor, boolean visible
     ) {
         if (!visible) {
             // Invisible annotations can be in the class file without issue
@@ -289,7 +290,7 @@ public class CoverageScanner implements Closeable {
         };
     }
 
-    private void checkObject(MethodLocation location, ScanHandler handler, Object obj) {
+    private void checkObject(MemberLocation location, ScanHandler handler, Object obj) {
         if (obj instanceof Handle) {
             final Handle handle = (Handle)obj;
             checkMember(
@@ -299,13 +300,16 @@ public class CoverageScanner implements Closeable {
             );
         }
         if (obj instanceof ConstantDynamic) {
+            if (location.inJava < 11) {
+                handler.missing(location, new MemberLocation("ConstantDynamic", null, 11));
+            }
             final ConstantDynamic condy = (ConstantDynamic)obj;
             checkType(location, handler, Type.getType(condy.getDescriptor()));
             checkObject(location, handler, condy.getBootstrapMethod());
         }
     }
 
-    private void checkType(MethodLocation location, ScanHandler handler, Type type) {
+    private void checkType(MemberLocation location, ScanHandler handler, Type type) {
         if (type.getSort() == Type.METHOD) {
             for (final Type arg : type.getArgumentTypes()) {
                 checkType(location, handler, arg);
@@ -324,7 +328,7 @@ public class CoverageScanner implements Closeable {
         final Integer cached = classVersionCache.get(className);
         if (cached != null) {
             if (cached > location.inJava) {
-                handler.missing(location, new MethodLocation(className, null, cached));
+                handler.missing(location, new MemberLocation(className, null, cached));
             }
             return;
         }
@@ -335,7 +339,7 @@ public class CoverageScanner implements Closeable {
                 final int minVersion = versions.firstKey();
                 classVersionCache.put(className, minVersion);
                 if (minVersion > location.inJava) {
-                    handler.missing(location, new MethodLocation(className, null, minVersion));
+                    handler.missing(location, new MemberLocation(className, null, minVersion));
                 }
                 return;
             }
@@ -345,14 +349,14 @@ public class CoverageScanner implements Closeable {
 
         final URL classUrl = ClassLoader.getSystemResource(className.replace('.', '/').concat(".class"));
         if (classUrl == null) {
-            handler.missing(location, new MethodLocation(className, null, 0));
+            handler.missing(location, new MemberLocation(className, null, 0));
         } else {
             classVersionCache.put(className, 0);
         }
     }
 
     private void checkMember(
-        MethodLocation location, ScanHandler handler,
+        MemberLocation location, ScanHandler handler,
         String owner, String name, String descriptor,
         boolean isMethod
     ) {
@@ -397,7 +401,7 @@ public class CoverageScanner implements Closeable {
                 }
             }
 
-            handler.missing(location, new MethodLocation(className, name, memberAdded));
+            handler.missing(location, new MemberLocation(className, name, memberAdded));
         }
     }
 
@@ -494,18 +498,18 @@ public class CoverageScanner implements Closeable {
 
     @FunctionalInterface
     public interface ScanHandler {
-        void missing(MethodLocation location, MethodLocation missing);
+        void missing(MemberLocation location, MemberLocation missing);
     }
 
-    public static class MethodLocation {
+    public static class MemberLocation {
         private final String inClass;
         @Nullable
-        private final String inMethod;
+        private final String inMember;
         private final int inJava;
 
-        public MethodLocation(String inClass, @Nullable String inMethod, int inJava) {
+        public MemberLocation(String inClass, @Nullable String inMember, int inJava) {
             this.inClass = inClass;
-            this.inMethod = inMethod;
+            this.inMember = inMember;
             this.inJava = inJava;
         }
 
@@ -514,8 +518,8 @@ public class CoverageScanner implements Closeable {
         }
 
         @Nullable
-        public String getInMethod() {
-            return inMethod;
+        public String getInMember() {
+            return inMember;
         }
 
         public int getInJava() {
@@ -524,11 +528,24 @@ public class CoverageScanner implements Closeable {
 
         @Override
         public String toString() {
-            return "MethodLocation{" +
+            return "MemberLocation{" +
                 "inClass='" + inClass + '\'' +
-                ", inMethod='" + inMethod + '\'' +
+                ", inMember='" + inMember + '\'' +
                 ", inJava=" + inJava +
                 '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof MemberLocation)) return false;
+            MemberLocation that = (MemberLocation)o;
+            return inJava == that.inJava && Objects.equals(inClass, that.inClass) && Objects.equals(inMember, that.inMember);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(inClass, inMember, inJava);
         }
     }
 }
