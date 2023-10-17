@@ -24,11 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
@@ -38,17 +36,17 @@ public class CtSym implements Closeable {
     private final FileSystem fs;
     private final Map<String, SortedMap<Integer, IOSupplier<InputStream>>> classes;
 
-    private CtSym(Path path, boolean injectJ8Unsafe) throws IOException {
+    private CtSym(Path path, boolean injectExtras) throws IOException {
         fs = FileSystems.newFileSystem(path, null);
         classes = readClasses(fs.getRootDirectories().iterator().next());
 
-        if (injectJ8Unsafe) {
-            final SortedMap<Integer, IOSupplier<InputStream>> unsafeMap =
-                classes.computeIfAbsent("sun.misc.Unsafe", c -> new TreeMap<>());
+        if (injectExtras) {
             final URL unsafeUrl = CtSym.class.getResource("Unsafe.sig");
             if (unsafeUrl != null) {
-                unsafeMap.put(8, unsafeUrl::openStream);
+                classes.computeIfAbsent("sun.misc.Unsafe", c -> new TreeMap<>())
+                    .put(8, unsafeUrl::openStream);
             }
+            readJrtClasses(classes);
         }
     }
 
@@ -84,8 +82,36 @@ public class CtSym implements Closeable {
         return result;
     }
 
-    public static CtSym open(Path path, boolean injectJ8Unsafe) throws IOException {
-        return new CtSym(path, injectJ8Unsafe);
+    @SuppressWarnings("resource")
+    private static void readJrtClasses(Map<String, SortedMap<Integer, IOSupplier<InputStream>>> result) throws IOException {
+        final Path jrtRoot;
+        try {
+            jrtRoot = Paths.get(new URI("jrt:/"));
+        } catch (Exception e) {
+            return;
+        }
+        final Integer runtimeVersion = Integer.getInteger("java.specification.version");
+        if (runtimeVersion == null) {
+            throw new IllegalStateException("No java.specification.version");
+        }
+        IOUtil.iterStream(Files.list(jrtRoot), module -> IOUtil.iterStream(
+            Files.walk(module)
+                .filter(p -> p.toString().endsWith(".class"))
+                .filter(Files::isRegularFile),
+            classFile -> {
+                String className = module.relativize(classFile)
+                    .toString()
+                    .replace(classFile.getFileSystem().getSeparator(), ".");
+                className = className.substring(0, className.length() - 6); // ".class".length()
+                if (className.equals("module-info") || className.endsWith("package-info")) return;
+                result.computeIfAbsent(className, c -> new TreeMap<>())
+                    .put(runtimeVersion, () -> Files.newInputStream(classFile));
+            }
+        ));
+    }
+
+    public static CtSym open(Path path, boolean injectExtras) throws IOException {
+        return new CtSym(path, injectExtras);
     }
 
     public static CtSym open(Path path) throws IOException {
