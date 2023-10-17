@@ -296,16 +296,18 @@ public class CoverageScanner implements Closeable {
             checkMember(
                 location, handler,
                 handle.getOwner(), handle.getName(), handle.getDesc(),
-                handle.getTag() >= Opcodes.INVOKEVIRTUAL
+                handle.getTag() >= Opcodes.H_INVOKEVIRTUAL
             );
-        }
-        if (obj instanceof ConstantDynamic) {
+        } else if (obj instanceof ConstantDynamic) {
             if (location.inJava < 11) {
                 handler.missing(location, new MemberLocation("ConstantDynamic", null, 11));
             }
             final ConstantDynamic condy = (ConstantDynamic)obj;
             checkType(location, handler, Type.getType(condy.getDescriptor()));
             checkObject(location, handler, condy.getBootstrapMethod());
+        } else if (obj instanceof Type) {
+            final Type type = (Type)obj;
+            checkType(location, handler, type);
         }
     }
 

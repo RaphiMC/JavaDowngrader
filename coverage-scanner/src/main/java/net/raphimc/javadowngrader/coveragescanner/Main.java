@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.ProviderNotFoundException;
 import java.util.List;
 
 public class Main {
@@ -39,14 +40,15 @@ public class Main {
         @Nullable
         public Integer baseJava;
 
-        @Arg(dest = "input_jars")
-        public List<Path> inputJars;
+        @Arg(dest = "inputs")
+        public List<Path> inputs;
 
         @Override
         public String toString() {
             return "ParsedArgs{" +
                 "javaHome=" + javaHome +
-                ", inputJars=" + inputJars +
+                ", baseJava=" + baseJava +
+                ", inputs=" + inputs +
                 '}';
         }
     }
@@ -65,8 +67,8 @@ public class Main {
         parser.addArgument("-b", "--base-java")
             .help("The version of Java to check from. Default is the versions of the classes themselves.")
             .type(int.class);
-        parser.addArgument("input-jars")
-            .help("Jars to test coverage for")
+        parser.addArgument("inputs")
+            .help("Jars/classes to test coverage for")
             .nargs("+")
             .type(new PathArgumentType()
                 .verifyCanRead()
@@ -96,25 +98,15 @@ public class Main {
             final long ctEndTime = System.nanoTime();
             System.err.println("INFO: Loaded ct.sym in " + (ctEndTime - ctStartTime) / 1000 / 1000.0 + "ms");
 
-            for (final Path jar : args.inputJars) {
+            for (final Path jar : args.inputs) {
                 System.err.println("INFO: Starting scan of " + jar);
                 final long startTime = System.nanoTime();
-                scanner.scanJar(jar, (location, missing) -> {
-                    final StringBuilder message = new StringBuilder();
-                    message.append(location.getInClass());
-                    if (location.getInMember() != null) {
-                        message.append('.').append(location.getInMember());
-                    }
-                    message.append(" uses ").append(missing.getInClass());
-                    if (missing.getInMember() != null) {
-                        message.append('.').append(missing.getInMember());
-                    }
-                    message.append(", which is not present in Java ").append(location.getInJava()).append('.');
-                    if (missing.getInJava() > 0) {
-                        message.append(" It was added in Java ").append(missing.getInJava()).append('.');
-                    }
-                    System.out.println(message);
-                }, args.baseJava);
+                try {
+                    scanner.scanJar(jar, Main::missingHandler, args.baseJava);
+                } catch (ProviderNotFoundException e) {
+                    // Probably a standalone class file
+                    scanner.scanClass(jar, Main::missingHandler, args.baseJava);
+                }
                 final long endTime = System.nanoTime();
                 System.err.println("INFO: Scanned " + jar + " in " + (endTime - startTime) / 1000 / 1000.0 + "ms");
             }
@@ -123,5 +115,22 @@ public class Main {
             e.printStackTrace();
             System.exit(1);
         }
+    }
+
+    private static void missingHandler(CoverageScanner.MemberLocation location, CoverageScanner.MemberLocation missing) {
+        final StringBuilder message = new StringBuilder();
+        message.append(location.getInClass());
+        if (location.getInMember() != null) {
+            message.append('.').append(location.getInMember());
+        }
+        message.append(" uses ").append(missing.getInClass());
+        if (missing.getInMember() != null) {
+            message.append('.').append(missing.getInMember());
+        }
+        message.append(", which is not present in Java ").append(location.getInJava()).append('.');
+        if (missing.getInJava() > 0) {
+            message.append(" It was added in Java ").append(missing.getInJava()).append('.');
+        }
+        System.out.println(message);
     }
 }
