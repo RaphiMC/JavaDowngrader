@@ -24,7 +24,6 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -36,15 +35,15 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CoverageScanner implements Closeable {
+public class CoverageScanner {
     @Nullable
     private final CtSym ct;
 
     private final Map<String, Integer> classVersionCache = new ConcurrentHashMap<>();
     private final Map<String, ClassInfo> classInfoCache = new ConcurrentHashMap<>();
 
-    public CoverageScanner(@Nullable Path ctSymPath) throws IOException {
-        ct = ctSymPath != null ? CtSym.open(ctSymPath) : null;
+    public CoverageScanner(@Nullable CtSym ct) throws IOException {
+        this.ct = ct;
     }
 
     /**
@@ -457,13 +456,6 @@ public class CoverageScanner implements Closeable {
             }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG);
         }
         return result;
-    }
-
-    @Override
-    public void close() throws IOException {
-        if (ct != null) {
-            ct.close();
-        }
     }
 
     private static class ClassInfo {

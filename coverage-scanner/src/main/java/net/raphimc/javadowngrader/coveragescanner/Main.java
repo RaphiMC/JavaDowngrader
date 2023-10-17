@@ -33,8 +33,9 @@ import java.util.List;
 
 public class Main {
     public static class ParsedArgs {
-        @Arg(dest = "java_home")
-        public Path javaHome;
+        @Arg(dest = "ct")
+        @Nullable
+        public Path ctPath;
 
         @Arg(dest = "base_java")
         @Nullable
@@ -46,7 +47,7 @@ public class Main {
         @Override
         public String toString() {
             return "ParsedArgs{" +
-                "javaHome=" + javaHome +
+                "ctPath=" + ctPath +
                 ", baseJava=" + baseJava +
                 ", inputs=" + inputs +
                 '}';
@@ -54,21 +55,26 @@ public class Main {
     }
 
     public static void main(String[] args) {
+        Path defaultCtPath = Paths.get(System.getProperty("java.home"), "lib", "ct.sym");
+        if (!Files.isRegularFile(defaultCtPath)) {
+            defaultCtPath = null;
+        }
+
         final ArgumentParser parser = ArgumentParsers.newFor("coverage-scanner").build()
             .defaultHelp(true)
             .description("Shows a list of JDK method calls that failed to downgrade");
-        parser.addArgument("-j", "--java-home")
-            .help("Alternate path to a Java installation (used for ct.sym)")
+        parser.addArgument("-c", "--ct")
+            .help("Path to ct.sym." + (defaultCtPath == null ? " If not specified, scanning support will be limited." : ""))
             .type(new PathArgumentType()
                 .verifyCanRead()
                 .verifyIsDirectory()
             )
-            .setDefault(Paths.get(System.getProperty("java.home")));
+            .setDefault(defaultCtPath);
         parser.addArgument("-b", "--base-java")
             .help("The version of Java to check from. Default is the versions of the classes themselves.")
             .type(int.class);
         parser.addArgument("inputs")
-            .help("Jars/classes to test coverage for")
+            .help("Jars/classes to test coverage for.")
             .nargs("+")
             .type(new PathArgumentType()
                 .verifyCanRead()
@@ -87,17 +93,16 @@ public class Main {
     }
 
     public static void run(ParsedArgs args) {
-        Path ctSymPath = args.javaHome.resolve("lib/ct.sym");
-        if (!Files.isRegularFile(ctSymPath)) {
+        if (args.ctPath == null) {
             System.err.println("WARNING: ct.sym not found, scanning support will be limited");
-            ctSymPath = null;
         }
 
         final long ctStartTime = System.nanoTime();
-        try (CoverageScanner scanner = new CoverageScanner(ctSymPath)) {
+        try (CtSym ct = args.ctPath != null ? CtSym.open(args.ctPath) : null) {
             final long ctEndTime = System.nanoTime();
             System.err.println("INFO: Loaded ct.sym in " + (ctEndTime - ctStartTime) / 1000 / 1000.0 + "ms");
 
+            final CoverageScanner scanner = new CoverageScanner(ct);
             for (final Path jar : args.inputs) {
                 System.err.println("INFO: Starting scan of " + jar);
                 final long startTime = System.nanoTime();
