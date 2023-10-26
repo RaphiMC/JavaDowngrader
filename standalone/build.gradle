@@ -22,7 +22,7 @@ dependencies {
 
     include "me.tongfei:progressbar:0.9.5"
 
-    include("org.jline:jline-terminal-jansi:3.23.0")
+    include("org.jline:jline-terminal-jansi:3.24.0")
 }
 
 application {
