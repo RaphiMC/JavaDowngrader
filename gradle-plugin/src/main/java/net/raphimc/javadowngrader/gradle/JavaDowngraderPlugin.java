@@ -19,12 +19,16 @@ package net.raphimc.javadowngrader.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaDowngraderPlugin implements Plugin<Project> {
 
     @Override
     public void apply(@NotNull Project project) {
+        if (GradleVersion.current().compareTo(GradleVersion.version("8.1")) < 0) {
+            throw new IllegalStateException("JavaDowngrader requires Gradle 8.1 or newer");
+        }
     }
 
 }
