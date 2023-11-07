@@ -42,7 +42,7 @@ JavaDowngrader provides the ``impl-classtransform`` submodule which contains var
 To use JavaDowngrader in Gradle you can get it from [Lenni0451's Maven](https://maven.lenni0451.net/#/releases/net/raphimc/java-downgrader).
 You can also find instructions how to implement it into your build script there.
 
-After adding the repository to your gradle project you can apply the plugin like this:
+After adding the repository to your ``settings.gradle`` file you can apply the plugin like this:
 ```groovy
 plugins {
     id "net.raphimc.java-downgrader" version "x.x.x"
@@ -51,6 +51,8 @@ plugins {
 
 ### Downgrade the main source set
 ```groovy
+import net.raphimc.javadowngrader.gradle.task.DowngradeSourceSetTask
+
 tasks.register("java8Main", DowngradeSourceSetTask) {
     sourceSet = sourceSets.main
 }.get().dependsOn("classes")
@@ -59,6 +61,8 @@ classes.finalizedBy("java8Main")
 
 ### Downgrade the built jar (If you use Java 8+ libraries)
 ```groovy
+import net.raphimc.javadowngrader.gradle.task.DowngradeJarTask
+
 tasks.register("java8Jar", DowngradeJarTask) {
     input = tasks.jar.archiveFile.get().asFile
     outputSuffix = "+java8"
