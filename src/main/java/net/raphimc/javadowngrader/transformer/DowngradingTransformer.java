@@ -154,7 +154,7 @@ public abstract class DowngradingTransformer {
         }
 
         for (Map.Entry<String, MethodInserter> entry : this.methodInserters.entrySet()) {
-            final String[] split = entry.getKey().split("\\.");
+            final String[] split = entry.getKey().split("\\.", 2);
             final String owner = split[0];
             final String methodName = split[1].substring(0, split[1].indexOf('('));
             final String methodDesc = split[1].substring(split[1].indexOf('('));
