@@ -20,6 +20,7 @@ package net.raphimc.javadowngrader.transformer.j8;
 import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
 import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.*;
+import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathResolveMI;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -79,6 +80,8 @@ public class Java9ToJava8 extends DowngradingTransformer {
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/lang/Runtime", "version", new RuntimeVersionMCR());
         this.addClassReplacementWithExtraDeps("java/lang/Runtime$Version", "java/lang/Runtime$VersionPattern");
+
+        this.addMethodInserter("java/nio/file/Path", "resolve", "(Ljava/lang/String;)Ljava/nio/file/Path;", new PathResolveMI());
     }
 
     @Override

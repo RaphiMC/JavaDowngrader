@@ -18,6 +18,7 @@
 package net.raphimc.javadowngrader.transformer;
 
 import net.raphimc.javadowngrader.RuntimeDepCollector;
+import net.raphimc.javadowngrader.util.ASMUtil;
 import net.raphimc.javadowngrader.util.Constants;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -39,6 +40,7 @@ public abstract class DowngradingTransformer {
     private final int targetVersion;
 
     private final Map<String, MethodCallReplacer> methodCallReplacers = new HashMap<>();
+    private final Map<String, MethodInserter> methodInserters = new HashMap<>();
     private final Map<String, ClassReplacement> classReplacements = new HashMap<>();
 
     public DowngradingTransformer(final int sourceVersion, final int targetVersion) {
@@ -51,11 +53,15 @@ public abstract class DowngradingTransformer {
     }
 
     protected void addMethodCallReplacer(final int opcode, final String owner, final String name, final MethodCallReplacer replacer) {
-        this.methodCallReplacers.put(owner + ';' + name, replacer);
+        this.methodCallReplacers.put(owner + '.' + name, replacer);
     }
 
     protected void addMethodCallReplacer(final int opcode, final String owner, final String name, final String descriptor, final MethodCallReplacer replacer) {
-        this.methodCallReplacers.put(owner + ';' + name + descriptor, replacer);
+        this.methodCallReplacers.put(owner + '.' + name + descriptor, replacer);
+    }
+
+    protected void addMethodInserter(final String owner, final String name, final String descriptor, final MethodInserter inserter) {
+        this.methodInserters.put(owner + '.' + name + descriptor, inserter);
     }
 
     protected void addClassReplacement(final String name, final ClassReplacement replacement) {
@@ -97,9 +103,9 @@ public abstract class DowngradingTransformer {
                     if (insn instanceof MethodInsnNode) {
                         final MethodInsnNode methodInsn = (MethodInsnNode) insn;
 
-                        MethodCallReplacer replacer = this.methodCallReplacers.get(methodInsn.owner + ';' + methodInsn.name + methodInsn.desc);
+                        MethodCallReplacer replacer = this.methodCallReplacers.get(methodInsn.owner + '.' + methodInsn.name + methodInsn.desc);
                         if (replacer == null) {
-                            replacer = this.methodCallReplacers.get(methodInsn.owner + ';' + methodInsn.name);
+                            replacer = this.methodCallReplacers.get(methodInsn.owner + '.' + methodInsn.name);
                         }
                         if (replacer != null) {
                             methodNode.instructions.insertBefore(
@@ -118,9 +124,9 @@ public abstract class DowngradingTransformer {
                                 if (!(arg instanceof Handle)) continue;
                                 final Handle handle = (Handle) arg;
 
-                                MethodCallReplacer replacer = this.methodCallReplacers.get(handle.getOwner() + ';' + handle.getName() + handle.getDesc());
+                                MethodCallReplacer replacer = this.methodCallReplacers.get(handle.getOwner() + '.' + handle.getName() + handle.getDesc());
                                 if (replacer == null) {
-                                    replacer = this.methodCallReplacers.get(handle.getOwner() + ';' + handle.getName());
+                                    replacer = this.methodCallReplacers.get(handle.getOwner() + '.' + handle.getName());
                                 }
                                 if (replacer != null) {
                                     final String desc = handle.getTag() == Opcodes.H_INVOKESTATIC || handle.getTag() == Opcodes.H_GETSTATIC || handle.getTag() == Opcodes.H_PUTSTATIC
@@ -145,6 +151,21 @@ public abstract class DowngradingTransformer {
                     }
                 }
             }
+        }
+
+        for (Map.Entry<String, MethodInserter> entry : this.methodInserters.entrySet()) {
+            final String[] split = entry.getKey().split("\\.");
+            final String owner = split[0];
+            final String methodName = split[1].substring(0, split[1].indexOf('('));
+            final String methodDesc = split[1].substring(split[1].indexOf('('));
+
+            if (!classNode.interfaces.contains(owner)) continue;
+            if (ASMUtil.hasMethod(classNode, methodName, methodDesc)) continue;
+
+            final MethodNode insertedMethod = new MethodNode(Opcodes.ACC_PUBLIC, methodName, methodDesc, null, null);
+            entry.getValue().insert(classNode, insertedMethod, depCollector, result);
+            classNode.methods.add(insertedMethod);
+            result.incrementTransformerCount();
         }
 
         if (!this.classReplacements.isEmpty()) {
@@ -227,10 +248,10 @@ public abstract class DowngradingTransformer {
 
         public static ClassReplacement ofRuntime(String newName, String... extraDependencies) {
             return new ClassReplacement(
-                Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + newName, true,
-                Arrays.stream(extraDependencies)
-                    .map(c -> Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + c)
-                    .collect(Collectors.toList())
+                    Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + newName, true,
+                    Arrays.stream(extraDependencies)
+                            .map(c -> Constants.JAVADOWNGRADER_RUNTIME_PACKAGE + c)
+                            .collect(Collectors.toList())
             );
         }
 
