@@ -18,7 +18,7 @@ dependencies {
     include "org.apache.logging.log4j:log4j-core:2.21.1"
     include "org.apache.logging.log4j:log4j-slf4j2-impl:2.21.1"
 
-    compileOnly "org.jetbrains:annotations:24.0.1"
+    compileOnly "org.jetbrains:annotations:24.1.0"
 
     include "me.tongfei:progressbar:0.9.5"
 
