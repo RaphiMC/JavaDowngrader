@@ -20,7 +20,10 @@ package net.raphimc.javadowngrader.transformer.j8;
 import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
 import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.*;
+import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathEndsWithMI;
 import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathResolveMI;
+import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathStartsWithMI;
+import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathToFileMI;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -82,6 +85,9 @@ public class Java9ToJava8 extends DowngradingTransformer {
         this.addClassReplacementWithExtraDeps("java/lang/Runtime$Version", "java/lang/Runtime$VersionPattern");
 
         this.addMethodInserter("java/nio/file/Path", "resolve", "(Ljava/lang/String;)Ljava/nio/file/Path;", new PathResolveMI());
+        this.addMethodInserter("java/nio/file/Path", "startsWith", "(Ljava/lang/String;)Z", new PathStartsWithMI());
+        this.addMethodInserter("java/nio/file/Path", "endsWith", "(Ljava/lang/String;)Z", new PathEndsWithMI());
+        this.addMethodInserter("java/nio/file/Path", "toFile", "()Ljava/io/File;", new PathToFileMI());
     }
 
     @Override
