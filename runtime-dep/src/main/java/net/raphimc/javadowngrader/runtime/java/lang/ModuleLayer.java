@@ -2,7 +2,7 @@
  * MIT License
  *
  * This file is part of JavaDowngrader - https://github.com/RaphiMC/JavaDowngrader
- * Copyright (c) 2023 RK_01/RaphiMC and contributors
+ * Copyright (C) 2023-2024 RK_01/RaphiMC and contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
