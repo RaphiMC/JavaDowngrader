@@ -48,14 +48,16 @@ public class FilesWriteStringMCR implements MethodCallReplacer {
         // Path CharSequence OpenOption
         replacement.add(new InsnNode(Opcodes.SWAP));
         // Path OpenOption CharSequence
+        replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/lang/CharSequence", "toString", "()Ljava/lang/String;"));
+        // Path OpenOption String
         if (hasStoredCharset) {
             replacement.add(new VarInsnNode(Opcodes.ALOAD, freeVarIndex));
-            // Path OpenOption CharSequence Charset
+            // Path OpenOption String Charset
         } else {
             replacement.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/nio/charset/StandardCharsets", "UTF_8", "Ljava/nio/charset/Charset;"));
-            // Path OpenOption CharSequence Charset
+            // Path OpenOption String Charset
         }
-        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/CharSequence", "getBytes", "(Ljava/nio/charset/Charset;)[B"));
+        replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "getBytes", "(Ljava/nio/charset/Charset;)[B"));
         // Path OpenOption byte[]
         replacement.add(new InsnNode(Opcodes.SWAP));
         // Path byte[] OpenOption
