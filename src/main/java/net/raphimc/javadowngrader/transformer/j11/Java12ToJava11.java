@@ -20,6 +20,7 @@ package net.raphimc.javadowngrader.transformer.j11;
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
 import net.raphimc.javadowngrader.transformer.j11.methodcallreplacer.ClassArrayTypeMCR;
 import net.raphimc.javadowngrader.transformer.j11.methodcallreplacer.CompletableFutureExceptionallyAsyncMCR;
+import net.raphimc.javadowngrader.transformer.j11.methodcallreplacer.StringDescribeConstableMCR;
 import org.objectweb.asm.Opcodes;
 
 public class Java12ToJava11 extends DowngradingTransformer {
@@ -30,6 +31,8 @@ public class Java12ToJava11 extends DowngradingTransformer {
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/util/concurrent/CompletableFuture", "exceptionallyAsync", "(Ljava/util/function/Function;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", new CompletableFutureExceptionallyAsyncMCR());
 
         this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "arrayType", "()Ljava/lang/Class;", new ClassArrayTypeMCR());
+
+        this.addMethodCallReplacer(Opcodes.INVOKEVIRTUAL, "java/lang/String", "describeConstable", "()Ljava/util/Optional;", new StringDescribeConstableMCR());
     }
 
 }
