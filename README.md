@@ -76,6 +76,10 @@ Some of the optional properties include:
 - ``outputSuffix``: The suffix to append to the output jar file (Default: "-downgraded")
 - ``copyRuntimeClasses``: Whether to copy the JavaDowngrader runtime classes to the output jar (Default: true). Should be set to false if your jar already contains JavaDowngrader itself
 
+## Usage (In Maven)
+JavaDowngrader doesn't have official maven support, but there is an [unofficial maven plugin made by tr7zw](https://github.com/tr7zw/JavaDowngrader-Maven).
+You can find instructions on how to implement it into your build script there.
+
 ## Contact
 If you encounter any issues, please report them on the
 [issue tracker](https://github.com/RaphiMC/JavaDowngrader/issues).  
