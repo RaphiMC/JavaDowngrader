@@ -38,6 +38,7 @@ import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.OptionalOrMC
 import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.OptionalStreamMCR;
 import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.RuntimeVersionMCR;
 import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.SetOfMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.ThreadOnSpinWaitMCR;
 import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathEndsWithMI;
 import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathResolveMI;
 import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathStartsWithMI;
@@ -109,6 +110,8 @@ public class Java9ToJava8 extends DowngradingTransformer {
 
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/lang/Integer", "parseInt", "(Ljava/lang/CharSequence;III)I", new IntegerParseIntMCR());
         this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/lang/Integer", "parseUnsignedInt", "(Ljava/lang/CharSequence;III)I", new IntegerParseIntMCR());
+
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/lang/Thread", "onSpinWait", new ThreadOnSpinWaitMCR());
     }
 
     @Override
