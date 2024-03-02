@@ -19,7 +19,25 @@ package net.raphimc.javadowngrader.transformer.j8;
 
 import net.raphimc.javadowngrader.transformer.DowngradeResult;
 import net.raphimc.javadowngrader.transformer.DowngradingTransformer;
-import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.*;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.BufferMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.ClassGetModuleMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.InputStreamReadAllBytesMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.InputStreamTransferToMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.IntegerParseIntMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.ListOfMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.MapEntryMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.MapOfEntriesMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.MapOfMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.MatcherAppendReplacementMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.MatcherAppendTailMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.MathFloorModMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.ObjectsRequireNonNullElseGetMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.ObjectsRequireNonNullElseMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.OptionalIfPresentOrElseMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.OptionalOrMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.OptionalStreamMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.RuntimeVersionMCR;
+import net.raphimc.javadowngrader.transformer.j8.methodcallreplacer.SetOfMCR;
 import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathEndsWithMI;
 import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathResolveMI;
 import net.raphimc.javadowngrader.transformer.j8.methodinserter.PathStartsWithMI;
@@ -88,6 +106,9 @@ public class Java9ToJava8 extends DowngradingTransformer {
         this.addMethodInserter("java/nio/file/Path", "startsWith", "(Ljava/lang/String;)Z", new PathStartsWithMI());
         this.addMethodInserter("java/nio/file/Path", "endsWith", "(Ljava/lang/String;)Z", new PathEndsWithMI());
         this.addMethodInserter("java/nio/file/Path", "toFile", "()Ljava/io/File;", new PathToFileMI());
+
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/lang/Integer", "parseInt", "(Ljava/lang/CharSequence;III)I", new IntegerParseIntMCR());
+        this.addMethodCallReplacer(Opcodes.INVOKESTATIC, "java/lang/Integer", "parseUnsignedInt", "(Ljava/lang/CharSequence;III)I", new IntegerParseIntMCR());
     }
 
     @Override
