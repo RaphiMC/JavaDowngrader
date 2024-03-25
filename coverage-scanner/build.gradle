@@ -11,7 +11,7 @@ configurations {
 }
 
 dependencies {
-    include api("org.ow2.asm:asm-commons:9.6")
+    include api("org.ow2.asm:asm-commons:9.7")
 
     include "net.sourceforge.argparse4j:argparse4j:0.9.0"
 
