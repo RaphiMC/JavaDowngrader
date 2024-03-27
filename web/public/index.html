@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JavaDowngrader example</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <script src="https://cjrtnc.leaningtech.com/3.0/cj3loader.js"></script>
+</head>
+<body>
+<form style="display: none" id="downgrader-form">
+    <label for="file">File:</label>
+    <input type="file" id="file" name="file" accept=".jar">
+    <label for="version-select">Target version:</label>
+    <select id="version-select">
+    </select>
+    <input type="button" value="Downgrade" onclick="downgrade()">
+</form>
+<p id="loading">
+    Loading...
+</p>
+<script>
+    (async function () {
+        await cheerpjInit();
+        const cj = await cheerpjRunLibrary("/app/JavaDowngrader-Web-1.1.2-SNAPSHOT.jar");
+        window.javadowngrader = await cj.net.raphimc.javadowngrader.web.JavaDowngraderWeb
+
+        console.log("Creating form")
+        const versions = await window.javadowngrader.supportedVersions();
+        const select = document.getElementById("version-select");
+        for (let i = 0; i < versions.length; i++) {
+            const version = versions[i];
+            const option = document.createElement("option");
+            option.value = version;
+            option.text = version;
+            select.appendChild(option);
+        }
+
+        document.getElementById("downgrader-form").style.display = "block";
+        document.getElementById("loading").style.display = "none";
+
+        console.log("Form created")
+    })()
+
+    async function downgrade() {
+        const file = document.getElementById("file").files[0];
+        const version = document.getElementById("version-select").value;
+
+        const reader = new FileReader();
+        reader.onload = async function (e) {
+            const file = e.target.result;
+            const base64Data = bytesToBase64(new Uint8Array(file));
+            const downgraded = await window.javadowngrader.convert(base64Data, 20, version);
+
+            const blob = new Blob([base64ToBytes(downgraded)], {type: "application/java-archive"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = file.name;
+            a.click();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function base64ToBytes(base64) {
+        const binString = atob(base64);
+        return Uint8Array.from(binString, (m) => m.codePointAt(0));
+    }
+
+    function bytesToBase64(bytes) {
+        const binString = String.fromCodePoint(...bytes);
+        return btoa(binString);
+    }
+</script>
+</body>
+</html>
