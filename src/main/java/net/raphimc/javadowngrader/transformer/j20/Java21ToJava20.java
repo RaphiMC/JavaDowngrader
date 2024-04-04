@@ -24,6 +24,7 @@ public class Java21ToJava20 extends DowngradingTransformer {
 
     public Java21ToJava20() {
         super(Opcodes.V21, Opcodes.V20);
+        addClassReplacement("java/lang/MatchException", ClassReplacement.ofRenameOnly("java/lang/RuntimeException"));
     }
 
 }
