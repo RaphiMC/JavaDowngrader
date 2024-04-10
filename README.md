@@ -5,7 +5,7 @@ To use JavaDowngrader as a library in your application, check out the [Usage (As
 If you just want to downgrade .jar files you can check out the [Usage (Standalone)](#usage-standalonebootstrap) section.
 
 ## Features
-- Supports up to Java 21 and down to Java 8
+- Supports up to Java 22 and down to Java 8
 - Downgrades language features
 - Downgrades important Java API calls
 - Can be applied during runtime

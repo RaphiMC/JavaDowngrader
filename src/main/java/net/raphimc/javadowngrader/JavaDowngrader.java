@@ -30,6 +30,7 @@ import net.raphimc.javadowngrader.transformer.j17.Java18ToJava17;
 import net.raphimc.javadowngrader.transformer.j18.Java19ToJava18;
 import net.raphimc.javadowngrader.transformer.j19.Java20ToJava19;
 import net.raphimc.javadowngrader.transformer.j20.Java21ToJava20;
+import net.raphimc.javadowngrader.transformer.j21.Java22ToJava21;
 import net.raphimc.javadowngrader.transformer.j8.Java9ToJava8;
 import net.raphimc.javadowngrader.transformer.j9.Java10ToJava9;
 import org.objectweb.asm.tree.ClassNode;
@@ -42,6 +43,7 @@ public class JavaDowngrader {
     private static final List<DowngradingTransformer> TRANSFORMER = new ArrayList<>();
 
     static {
+        TRANSFORMER.add(new Java22ToJava21());
         TRANSFORMER.add(new Java21ToJava20());
         TRANSFORMER.add(new Java20ToJava19());
         TRANSFORMER.add(new Java19ToJava18());
