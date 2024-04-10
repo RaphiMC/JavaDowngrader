@@ -53,9 +53,9 @@ jobs:
       - name: Download Geyser
         run: curl -Lo Geyser-Standalone.jar https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/standalone
       - name: Downgrade Geyser
-        run: java -jar JavaDowngrader-Standalone-1.1.2-SNAPSHOT.jar -i Geyser-Standalone.jar -o Geyser-Standalone-out.jar -v 8
+        run: java -jar JavaDowngrader-Standalone-1.1.2.jar -i Geyser-Standalone.jar -o Geyser-Standalone-out.jar -v 8
       - name: Generate coverage report
-        run: java -jar coverage-scanner-1.1.2-SNAPSHOT.jar Geyser-Standalone-out.jar > coverage-geyser.txt
+        run: java -jar coverage-scanner-1.1.2.jar Geyser-Standalone-out.jar > coverage-geyser.txt
       - name: Upload coverage report
         uses: actions/upload-artifact@v2.3.1
         with:
@@ -81,9 +81,9 @@ jobs:
       - name: Download Paperclip
         run: wget https://api.papermc.io/v2/projects/paper/versions/1.20.2/builds/240/downloads/paper-1.20.2-240.jar
       - name: Downgrade Paperclip
-        run: java -jar JavaDowngrader-Standalone-1.1.2-SNAPSHOT.jar -i paper-1.20.2-240.jar -o paperclip-downgraded.jar -v 8
+        run: java -jar JavaDowngrader-Standalone-1.1.2.jar -i paper-1.20.2-240.jar -o paperclip-downgraded.jar -v 8
       - name: Generate coverage report
-        run: java -jar coverage-scanner-1.1.2-SNAPSHOT.jar paperclip-downgraded.jar > coverage-paperclip.txt
+        run: java -jar coverage-scanner-1.1.2.jar paperclip-downgraded.jar > coverage-paperclip.txt
       - name: Upload coverage report
         uses: actions/upload-artifact@v2.3.1
         with:
@@ -112,9 +112,9 @@ jobs:
           java -jar BuildTools.jar
           7z x spigot-*.jar "META-INF/versions/spigot-*.jar"
       - name: Downgrade Spigot
-        run: java -jar JavaDowngrader-Standalone-1.1.2-SNAPSHOT.jar -i META-INF/versions/spigot-*.jar -o spigot-downgraded.jar -v 8
+        run: java -jar JavaDowngrader-Standalone-1.1.2.jar -i META-INF/versions/spigot-*.jar -o spigot-downgraded.jar -v 8
       - name: Generate coverage report
-        run: java -jar coverage-scanner-1.1.2-SNAPSHOT.jar spigot-downgraded.jar > coverage-spigot.txt
+        run: java -jar coverage-scanner-1.1.2.jar spigot-downgraded.jar > coverage-spigot.txt
       - name: Upload coverage report
         uses: actions/upload-artifact@v2.3.1
         with:
