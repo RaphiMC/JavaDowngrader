@@ -1,3 +1,7 @@
+**This project has been discontinued in favour of https://github.com/unimined/JvmDowngrader which is a more complete java downgrading project.**
+
+---
+
 # JavaDowngrader
 Standalone program and library which can downgrade Java classes/programs down to Java 8.
 
