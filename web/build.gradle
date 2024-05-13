@@ -1,0 +1,34 @@
+plugins {
+    id "java"
+}
+
+configurations {
+    include
+
+    implementation.extendsFrom include
+    api.extendsFrom include
+}
+
+dependencies {
+    include project(":impl-classtransform")
+
+    include "org.apache.logging.log4j:log4j-core:2.22.1"
+    include "org.apache.logging.log4j:log4j-slf4j2-impl:2.22.1"
+}
+
+jar {
+    dependsOn configurations.include
+    from {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        configurations.include.collect {
+            zipTree(it)
+        }
+    } {
+        exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
+    }
+}
+
+project.tasks.withType(PublishToMavenRepository).forEach {
+    it.enabled = false
+}
+

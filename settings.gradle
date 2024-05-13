@@ -8,6 +8,7 @@ pluginManagement {
 rootProject.name = "JavaDowngrader"
 
 include(":standalone")
+include(":web")
 include(":bootstrap")
 include(":runtime-dep")
 include(":impl-classtransform")
